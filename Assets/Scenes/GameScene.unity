@@ -406,6 +406,7 @@ GameObject:
   - component: {fileID: 54519398}
   - component: {fileID: 54519397}
   - component: {fileID: 54519400}
+  - component: {fileID: 54519401}
   m_Layer: 5
   m_Name: 21
   m_TagString: Untagged
@@ -509,8 +510,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -540,8 +541,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 21
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &54519401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 54519395}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &58938586
 GameObject:
   m_ObjectHideFlags: 0
@@ -829,6 +851,7 @@ GameObject:
   - component: {fileID: 160272626}
   - component: {fileID: 160272625}
   - component: {fileID: 160272628}
+  - component: {fileID: 160272629}
   m_Layer: 5
   m_Name: 5
   m_TagString: Untagged
@@ -932,8 +955,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -963,8 +986,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 5
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &160272629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 160272623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &180882360
 GameObject:
   m_ObjectHideFlags: 0
@@ -978,6 +1022,7 @@ GameObject:
   - component: {fileID: 180882363}
   - component: {fileID: 180882362}
   - component: {fileID: 180882365}
+  - component: {fileID: 180882366}
   m_Layer: 5
   m_Name: 7
   m_TagString: Untagged
@@ -1081,8 +1126,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1112,8 +1157,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 7
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &180882366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 180882360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &182370260
 GameObject:
   m_ObjectHideFlags: 0
@@ -1264,6 +1330,7 @@ GameObject:
   - component: {fileID: 184659686}
   - component: {fileID: 184659685}
   - component: {fileID: 184659688}
+  - component: {fileID: 184659689}
   m_Layer: 5
   m_Name: 2
   m_TagString: Untagged
@@ -1367,8 +1434,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1398,8 +1465,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 2
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &184659689
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 184659683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &220399001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1687,6 +1775,7 @@ GameObject:
   - component: {fileID: 291850381}
   - component: {fileID: 291850380}
   - component: {fileID: 291850383}
+  - component: {fileID: 291850384}
   m_Layer: 5
   m_Name: 1
   m_TagString: Untagged
@@ -1790,8 +1879,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -1821,8 +1910,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 1
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &291850384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 291850378}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &334805951
 GameObject:
   m_ObjectHideFlags: 0
@@ -1973,6 +2083,7 @@ GameObject:
   - component: {fileID: 371175576}
   - component: {fileID: 371175575}
   - component: {fileID: 371175578}
+  - component: {fileID: 371175579}
   m_Layer: 5
   m_Name: 6
   m_TagString: Untagged
@@ -2076,8 +2187,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -2107,8 +2218,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 6
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &371175579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 371175573}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &445902755
 GameObject:
   m_ObjectHideFlags: 0
@@ -2122,6 +2254,7 @@ GameObject:
   - component: {fileID: 445902758}
   - component: {fileID: 445902757}
   - component: {fileID: 445902760}
+  - component: {fileID: 445902761}
   m_Layer: 5
   m_Name: 8
   m_TagString: Untagged
@@ -2225,8 +2358,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -2256,8 +2389,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 8
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &445902761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 445902755}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &494085420
 GameObject:
   m_ObjectHideFlags: 0
@@ -2819,6 +2973,7 @@ GameObject:
   - component: {fileID: 575314250}
   - component: {fileID: 575314249}
   - component: {fileID: 575314252}
+  - component: {fileID: 575314253}
   m_Layer: 5
   m_Name: 19
   m_TagString: Untagged
@@ -2922,8 +3077,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -2953,8 +3108,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 19
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &575314253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 575314247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &604618144
 GameObject:
   m_ObjectHideFlags: 0
@@ -3363,6 +3539,7 @@ GameObject:
   - component: {fileID: 773585119}
   - component: {fileID: 773585118}
   - component: {fileID: 773585121}
+  - component: {fileID: 773585122}
   m_Layer: 5
   m_Name: 15
   m_TagString: Untagged
@@ -3466,8 +3643,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -3497,8 +3674,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 15
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &773585122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 773585116}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &907557583
 GameObject:
   m_ObjectHideFlags: 0
@@ -3512,6 +3710,7 @@ GameObject:
   - component: {fileID: 907557586}
   - component: {fileID: 907557585}
   - component: {fileID: 907557588}
+  - component: {fileID: 907557589}
   m_Layer: 5
   m_Name: 22
   m_TagString: Untagged
@@ -3615,8 +3814,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -3646,8 +3845,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 22
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &907557589
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 907557583}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &937558291
 GameObject:
   m_ObjectHideFlags: 0
@@ -4176,6 +4396,7 @@ GameObject:
   - component: {fileID: 1076456084}
   - component: {fileID: 1076456083}
   - component: {fileID: 1076456086}
+  - component: {fileID: 1076456087}
   m_Layer: 5
   m_Name: 12
   m_TagString: Untagged
@@ -4279,8 +4500,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -4310,8 +4531,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 12
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1076456087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1076456081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1127204785
 GameObject:
   m_ObjectHideFlags: 0
@@ -4678,6 +4920,7 @@ GameObject:
   - component: {fileID: 1223069137}
   - component: {fileID: 1223069136}
   - component: {fileID: 1223069139}
+  - component: {fileID: 1223069140}
   m_Layer: 5
   m_Name: 20
   m_TagString: Untagged
@@ -4781,8 +5024,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -4812,8 +5055,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 20
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1223069140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1223069134}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1223153257
 GameObject:
   m_ObjectHideFlags: 0
@@ -4827,6 +5091,7 @@ GameObject:
   - component: {fileID: 1223153260}
   - component: {fileID: 1223153259}
   - component: {fileID: 1223153262}
+  - component: {fileID: 1223153263}
   m_Layer: 5
   m_Name: 9
   m_TagString: Untagged
@@ -4930,8 +5195,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -4961,8 +5226,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 9
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1223153263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1223153257}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1256998561
 GameObject:
   m_ObjectHideFlags: 0
@@ -5327,6 +5613,7 @@ GameObject:
   - component: {fileID: 1415741280}
   - component: {fileID: 1415741279}
   - component: {fileID: 1415741282}
+  - component: {fileID: 1415741283}
   m_Layer: 5
   m_Name: 4
   m_TagString: Untagged
@@ -5430,8 +5717,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -5461,8 +5748,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 4
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1415741283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1415741277}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1435052157
 GameObject:
   m_ObjectHideFlags: 0
@@ -5476,6 +5784,7 @@ GameObject:
   - component: {fileID: 1435052160}
   - component: {fileID: 1435052159}
   - component: {fileID: 1435052162}
+  - component: {fileID: 1435052163}
   m_Layer: 5
   m_Name: 14
   m_TagString: Untagged
@@ -5579,8 +5888,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -5610,8 +5919,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 14
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1435052163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1435052157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1461948558
 GameObject:
   m_ObjectHideFlags: 0
@@ -5625,6 +5955,7 @@ GameObject:
   - component: {fileID: 1461948561}
   - component: {fileID: 1461948560}
   - component: {fileID: 1461948563}
+  - component: {fileID: 1461948564}
   m_Layer: 5
   m_Name: 11
   m_TagString: Untagged
@@ -5728,8 +6059,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -5759,8 +6090,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 11
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1461948564
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1461948558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1495433077
 GameObject:
   m_ObjectHideFlags: 0
@@ -6048,6 +6400,7 @@ GameObject:
   - component: {fileID: 1591274046}
   - component: {fileID: 1591274045}
   - component: {fileID: 1591274048}
+  - component: {fileID: 1591274049}
   m_Layer: 5
   m_Name: 24
   m_TagString: Untagged
@@ -6151,8 +6504,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -6182,8 +6535,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 24
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1591274049
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1591274043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1681724668
 GameObject:
   m_ObjectHideFlags: 0
@@ -6197,6 +6571,7 @@ GameObject:
   - component: {fileID: 1681724671}
   - component: {fileID: 1681724670}
   - component: {fileID: 1681724673}
+  - component: {fileID: 1681724674}
   m_Layer: 5
   m_Name: 3
   m_TagString: Untagged
@@ -6300,8 +6675,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -6331,8 +6706,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 3
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1681724674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1681724668}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1857481289
 GameObject:
   m_ObjectHideFlags: 0
@@ -6346,6 +6742,7 @@ GameObject:
   - component: {fileID: 1857481292}
   - component: {fileID: 1857481291}
   - component: {fileID: 1857481294}
+  - component: {fileID: 1857481295}
   m_Layer: 5
   m_Name: 13
   m_TagString: Untagged
@@ -6449,8 +6846,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -6480,8 +6877,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 13
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1857481295
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1857481289}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1885401079
 GameObject:
   m_ObjectHideFlags: 0
@@ -6495,6 +6913,7 @@ GameObject:
   - component: {fileID: 1885401082}
   - component: {fileID: 1885401081}
   - component: {fileID: 1885401084}
+  - component: {fileID: 1885401085}
   m_Layer: 5
   m_Name: 18
   m_TagString: Untagged
@@ -6598,8 +7017,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -6629,8 +7048,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 18
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1885401085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1885401079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1889950634
 GameObject:
   m_ObjectHideFlags: 0
@@ -6781,6 +7221,7 @@ GameObject:
   - component: {fileID: 1909712547}
   - component: {fileID: 1909712546}
   - component: {fileID: 1909712549}
+  - component: {fileID: 1909712550}
   m_Layer: 5
   m_Name: 23
   m_TagString: Untagged
@@ -6884,8 +7325,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -6915,8 +7356,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 23
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &1909712550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1909712544}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &1949118087
 GameObject:
   m_ObjectHideFlags: 0
@@ -7204,6 +7666,7 @@ GameObject:
   - component: {fileID: 2007337699}
   - component: {fileID: 2007337698}
   - component: {fileID: 2007337701}
+  - component: {fileID: 2007337702}
   m_Layer: 5
   m_Name: 17
   m_TagString: Untagged
@@ -7307,8 +7770,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -7338,8 +7801,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 17
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &2007337702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2007337696}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &2049876593
 GameObject:
   m_ObjectHideFlags: 0
@@ -7353,6 +7837,7 @@ GameObject:
   - component: {fileID: 2049876596}
   - component: {fileID: 2049876595}
   - component: {fileID: 2049876598}
+  - component: {fileID: 2049876599}
   m_Layer: 5
   m_Name: 16
   m_TagString: Untagged
@@ -7456,8 +7941,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -7487,8 +7972,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 16
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &2049876599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2049876593}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1 &2077280973
 GameObject:
   m_ObjectHideFlags: 0
@@ -7502,6 +8008,7 @@ GameObject:
   - component: {fileID: 2077280976}
   - component: {fileID: 2077280975}
   - component: {fileID: 2077280978}
+  - component: {fileID: 2077280979}
   m_Layer: 5
   m_Name: 10
   m_TagString: Untagged
@@ -7605,8 +8112,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -7636,8 +8143,29 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SlotID
   slotNumber: 10
+  slotUI: {fileID: 0}
   occupiedBy: 0
   isInMill: 0
+--- !u!114 &2077280979
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2077280973}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b83913dae55f1384f9ed4132ed5fd15a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlotUI
+  slotImage: {fileID: 0}
+  emptyColor: {r: 1, g: 1, b: 1, a: 1}
+  player1Color: {r: 0, g: 1, b: 0, a: 1}
+  player2Color: {r: 1, g: 0, b: 0, a: 1}
+  highlightplayer1Color: {r: 0.8152092, g: 1, b: 0.51886785, a: 1}
+  highlightplayer2Color: {r: 1, g: 0.49622637, b: 0.49622637, a: 1}
+  millplayer1Color: {r: 0.073532924, g: 0.5018867, b: 0, a: 1}
+  millplayer2Color: {r: 0.5471698, g: 0.018120613, b: 0, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

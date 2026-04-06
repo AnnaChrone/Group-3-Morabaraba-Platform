@@ -5,6 +5,7 @@ public class SlotID : MonoBehaviour
 {
     [Header("Slot Info")]
     public int slotNumber;          // 1–24 (must match your adjacency)
+    public SlotUI slotUI;
 
     [Header("State")]
     public int occupiedBy = 0;      // 0 = none, 1 = player1, 2 = player2
@@ -21,6 +22,7 @@ public class SlotID : MonoBehaviour
     void Awake()
     {
         image = GetComponent<Image>();
+        slotUI = GetComponent<SlotUI>();
     }
 
     // Place or move a cow
@@ -28,14 +30,7 @@ public class SlotID : MonoBehaviour
     {
         occupiedBy = player;
 
-        if (player == 1)
-        {
-            image.color = Color.green;
-        }
-        else if (player == 2)
-        {
-            image.color = Color.red;
-        }
+        slotUI.SetPlayerColor(player);
     }
 
     // Clear the slot (VERY IMPORTANT for movement)
@@ -44,10 +39,10 @@ public class SlotID : MonoBehaviour
         occupiedBy = 0;
         isInMill = false;
 
-        image.color = Color.white; // fixes your issue
+        image.color = Color.white; 
     }
 
-    // Mill state (for later use)
+    // Mill state
     public void SetMillStatus(bool status)
     {
         isInMill = status;

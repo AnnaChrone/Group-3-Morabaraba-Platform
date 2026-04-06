@@ -37,17 +37,15 @@ public class GameController : MonoBehaviour
     {24, new int[] {16,17,23}}
 };
 
+    // This is perfectly fine and actually preferred for Morabaraba!
     int[][] mills = new int[][]
-{
+    {
     new int[] {1,2,3}, new int[] {3,4,5}, new int[] {5,6,7}, new int[] {7,8,1},
-
     new int[] {9,10,11}, new int[] {11,12,13}, new int[] {13,14,15}, new int[] {15,16,9},
-
     new int[] {17,18,19}, new int[] {19,20,21}, new int[] {21,22,23}, new int[] {23,24,17},
-
     new int[] {1,9,17}, new int[] {2,10,18}, new int[] {3,11,19}, new int[] {4,12,20},
     new int[] {5,13,21}, new int[] {6,14,22}, new int[] {7,15,23}, new int[] {8,16,24}
-};
+    };
 
     public SlotID[] allSlots;
 
@@ -100,7 +98,7 @@ public class GameController : MonoBehaviour
         }
 
         // Switch to moving phase after all cows placed
-        if (placementCounter >= 10)
+        if (placementCounter >= 24)
         {
             currentPhase = GamePhase.Moving;
         }
@@ -119,7 +117,7 @@ public class GameController : MonoBehaviour
 
             selectedSlot = slot;
             Debug.Log(slot + " Selected");
-
+            selectedSlot.slotUI.Highlight(currentPlayer);
 
             return;
         }
@@ -138,7 +136,8 @@ public class GameController : MonoBehaviour
             slot.SetOccupant(currentPlayer);
             selectedSlot.ClearSlot();
 
-
+            // Clear highlight from previously selected slot
+            selectedSlot.slotUI.ResetColor();
             selectedSlot = null;
 
             // Check for mill
@@ -155,9 +154,12 @@ public class GameController : MonoBehaviour
             // Allow reselection (nice UX)
             if (slot.occupiedBy == currentPlayer)
             {
+                // Clear previous highlight
+                if (selectedSlot != null)
+                    selectedSlot.slotUI.ResetColor();
+
                 selectedSlot = slot;
-
-
+                selectedSlot.slotUI.Highlight(currentPlayer);
             }
         }
     }
@@ -165,13 +167,20 @@ public class GameController : MonoBehaviour
     public void HandleCapturing(SlotID slot)
     {
         // Can only remove opponent cows
-        if (slot.occupiedBy == currentPlayer || !slot.IsOccupied)
+        if (slot.occupiedBy == currentPlayer || !slot.IsOccupied || slot.isInMill)
             return;
 
         slot.ClearSlot();
 
-        // After capture  back to normal gameplay
-        currentPhase = GamePhase.Placing; // or Moving later
+        // After capture back to normal gameplay
+        if (placementCounter >= 10)
+        {
+            currentPhase = GamePhase.Moving;
+        }
+        else
+        {
+            currentPhase = GamePhase.Placing;
+        }
 
         SwitchPlayer();
     }
@@ -196,10 +205,15 @@ public class GameController : MonoBehaviour
             {
                 Debug.Log("MILL FOR PLAYER " + player);
 
-                // Optional: mark them as part of a mill
+                // Visual feedback for mill
                 s1.SetMillStatus(true);
                 s2.SetMillStatus(true);
                 s3.SetMillStatus(true);
+
+                // Highlight the mill slots
+                s1.slotUI.HighlightMill(player);
+                s2.slotUI.HighlightMill(player);
+                s3.slotUI.HighlightMill(player);
 
                 return true;
             }
@@ -208,17 +222,12 @@ public class GameController : MonoBehaviour
         return false;
     }
 
-
-
     public GamePhase currentPhase = GamePhase.Placing;
-
 }
+
 public enum GamePhase
 {
     Placing,
     Moving,
     Capturing
 }
-
-
-
