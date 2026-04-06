@@ -407,7 +407,7 @@ GameObject:
   - component: {fileID: 54519397}
   - component: {fileID: 54519400}
   m_Layer: 5
-  m_Name: 1 (20)
+  m_Name: 21
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -476,7 +476,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 54519398}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 54519400}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &54519398
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -818,7 +830,7 @@ GameObject:
   - component: {fileID: 160272625}
   - component: {fileID: 160272628}
   m_Layer: 5
-  m_Name: 1 (4)
+  m_Name: 5
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -887,7 +899,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 160272626}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 160272628}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &160272626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -955,7 +979,7 @@ GameObject:
   - component: {fileID: 180882362}
   - component: {fileID: 180882365}
   m_Layer: 5
-  m_Name: 1 (6)
+  m_Name: 7
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1024,7 +1048,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 180882363}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 180882365}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &180882363
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1298,7 +1334,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 184659686}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 184659688}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &184659686
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1709,7 +1757,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 291850381}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 291850383}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &291850381
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1914,7 +1974,7 @@ GameObject:
   - component: {fileID: 371175575}
   - component: {fileID: 371175578}
   m_Layer: 5
-  m_Name: 1 (5)
+  m_Name: 6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1983,7 +2043,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 371175576}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 371175578}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &371175576
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2051,7 +2123,7 @@ GameObject:
   - component: {fileID: 445902757}
   - component: {fileID: 445902760}
   m_Layer: 5
-  m_Name: 1 (7)
+  m_Name: 8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2120,7 +2192,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 445902758}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 445902760}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &445902758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2736,7 +2820,7 @@ GameObject:
   - component: {fileID: 575314249}
   - component: {fileID: 575314252}
   m_Layer: 5
-  m_Name: 1 (22)
+  m_Name: 19
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2805,7 +2889,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 575314250}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 575314252}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &575314250
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3268,7 +3364,7 @@ GameObject:
   - component: {fileID: 773585118}
   - component: {fileID: 773585121}
   m_Layer: 5
-  m_Name: 1 (17)
+  m_Name: 15
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3337,7 +3433,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 773585119}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 773585121}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &773585119
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3405,7 +3513,7 @@ GameObject:
   - component: {fileID: 907557585}
   - component: {fileID: 907557588}
   m_Layer: 5
-  m_Name: 1 (19)
+  m_Name: 22
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3474,7 +3582,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 907557586}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 907557588}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &907557586
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3623,7 +3743,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1264572956}
-  - {fileID: 1151811113}
   - {fileID: 604618145}
   - {fileID: 642767725}
   m_Father: {fileID: 0}
@@ -4058,7 +4177,7 @@ GameObject:
   - component: {fileID: 1076456083}
   - component: {fileID: 1076456086}
   m_Layer: 5
-  m_Name: 1 (14)
+  m_Name: 12
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4127,7 +4246,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1076456084}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1076456086}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1076456084
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4455,41 +4586,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1137891046}
   m_CullTransparentMesh: 1
---- !u!1 &1151811112
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1151811113}
-  m_Layer: 5
-  m_Name: Player2Controller
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1151811113
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1151811112}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 937558295}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1169984774
 GameObject:
   m_ObjectHideFlags: 0
@@ -4583,7 +4679,7 @@ GameObject:
   - component: {fileID: 1223069136}
   - component: {fileID: 1223069139}
   m_Layer: 5
-  m_Name: 1 (21)
+  m_Name: 20
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4652,7 +4748,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1223069137}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1223069139}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1223069137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4720,7 +4828,7 @@ GameObject:
   - component: {fileID: 1223153259}
   - component: {fileID: 1223153262}
   m_Layer: 5
-  m_Name: 1 (11)
+  m_Name: 9
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4789,7 +4897,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1223153260}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1223153262}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1223153260
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4989,8 +5109,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1264572956}
+  - component: {fileID: 1264572957}
   m_Layer: 5
-  m_Name: Player1Controller
+  m_Name: GameController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5015,6 +5136,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1264572957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1264572955}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b871c64618ee91f41ad39a17beb79a16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  currentPlayer: 1
+  currentPhase: 0
 --- !u!1 &1289664690
 GameObject:
   m_ObjectHideFlags: 0
@@ -5166,7 +5301,7 @@ GameObject:
   - component: {fileID: 1415741279}
   - component: {fileID: 1415741282}
   m_Layer: 5
-  m_Name: 1 (3)
+  m_Name: 4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5235,7 +5370,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1415741280}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1415741282}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1415741280
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5303,7 +5450,7 @@ GameObject:
   - component: {fileID: 1435052159}
   - component: {fileID: 1435052162}
   m_Layer: 5
-  m_Name: 1 (16)
+  m_Name: 14
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5372,7 +5519,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1435052160}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1435052162}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1435052160
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5440,7 +5599,7 @@ GameObject:
   - component: {fileID: 1461948560}
   - component: {fileID: 1461948563}
   m_Layer: 5
-  m_Name: 1 (13)
+  m_Name: 11
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5509,7 +5668,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1461948561}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1461948563}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1461948561
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5851,7 +6022,7 @@ GameObject:
   - component: {fileID: 1591274045}
   - component: {fileID: 1591274048}
   m_Layer: 5
-  m_Name: 1 (9)
+  m_Name: 24
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5920,7 +6091,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1591274046}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1591274048}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1591274046
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6057,7 +6240,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1681724671}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1681724673}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1681724671
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6125,7 +6320,7 @@ GameObject:
   - component: {fileID: 1857481291}
   - component: {fileID: 1857481294}
   m_Layer: 5
-  m_Name: 1 (15)
+  m_Name: 13
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6194,7 +6389,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1857481292}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1857481294}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1857481292
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6262,7 +6469,7 @@ GameObject:
   - component: {fileID: 1885401081}
   - component: {fileID: 1885401084}
   m_Layer: 5
-  m_Name: 1 (23)
+  m_Name: 18
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6331,7 +6538,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1885401082}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1885401084}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1885401082
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6536,7 +6755,7 @@ GameObject:
   - component: {fileID: 1909712546}
   - component: {fileID: 1909712549}
   m_Layer: 5
-  m_Name: 1 (18)
+  m_Name: 23
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6605,7 +6824,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1909712547}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 1909712549}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1909712547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6947,7 +7178,7 @@ GameObject:
   - component: {fileID: 2007337698}
   - component: {fileID: 2007337701}
   m_Layer: 5
-  m_Name: 1 (10)
+  m_Name: 17
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7016,7 +7247,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2007337699}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 2007337701}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2007337699
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7084,7 +7327,7 @@ GameObject:
   - component: {fileID: 2049876595}
   - component: {fileID: 2049876598}
   m_Layer: 5
-  m_Name: 1 (8)
+  m_Name: 16
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7153,7 +7396,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2049876596}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 2049876598}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2049876596
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7221,7 +7476,7 @@ GameObject:
   - component: {fileID: 2077280975}
   - component: {fileID: 2077280978}
   m_Layer: 5
-  m_Name: 1 (12)
+  m_Name: 10
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7290,7 +7545,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2077280976}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1264572957}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnSlotClicked
+        m_Mode: 2
+        m_Arguments:
+          m_ObjectArgument: {fileID: 2077280978}
+          m_ObjectArgumentAssemblyTypeName: SlotID, Assembly-CSharp
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2077280976
 MonoBehaviour:
   m_ObjectHideFlags: 0
