@@ -1,11 +1,16 @@
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
     public int currentPlayer = 1; // 1 = Player 1, 2 = Player 2
     public int placementCounter = 0;
+    public int Player1PiecesOnBoard = 12;
+    public int Player2PiecesOnBoard = 12;
+    public bool END = false;
+
 
     public SlotID selectedSlot = null;
 
@@ -58,7 +63,54 @@ public class GameController : MonoBehaviour
     {
         currentPlayer = (currentPlayer == 1) ? 2 : 1;
     }
+    public bool HasWon()
+    {
+        int opponent = (currentPlayer == 1) ? 2 : 1;
 
+        int opponentPieces = (opponent == 1) ? Player1PiecesOnBoard : Player2PiecesOnBoard;
+        if (placementCounter !=24)
+            return false;
+
+        // 1. Opponent has 2 or fewer pieces win
+        if (opponentPieces <= 2)
+            return true;
+
+        // 2. Check if opponent has any valid moves
+        bool canFly = (opponentPieces <= 3);
+
+        foreach (var slot in allSlots)
+        {
+            if (slot.occupiedBy != opponent)
+                continue;
+
+            // Flying
+            if (canFly)
+            {
+                if (allSlots.Any(s => !s.IsOccupied))
+                    return false; // has a move NOT a win
+            }
+            else
+            {
+                // Normal movement
+                foreach (int adj in adjacency[slot.slotNumber])
+                {
+                    SlotID adjSlot = GetSlotByNumber(adj);
+
+                    if (!adjSlot.IsOccupied)
+                        return false; // has a move NOT a win
+                }
+            }
+        }
+
+        // No moves found  win
+        return true;
+    }
+
+    public void GameOver(int Winner)
+    {
+        Debug.Log("GAME OVER: WINNER IS PLAYER NO. " + Winner);
+        currentPhase = GamePhase.End;
+    }
     bool IsAdjacent(SlotID from, SlotID to)
     {
         return adjacency[from.slotNumber].Contains(to.slotNumber);
@@ -97,6 +149,7 @@ public class GameController : MonoBehaviour
             return;
         }
 
+      
         // Switch to moving phase after all cows placed
         if (placementCounter >= 24)
         {
@@ -108,7 +161,7 @@ public class GameController : MonoBehaviour
 
     public void HandleMoving(SlotID slot)
     {
-        //  STEP 1: No piece selected yet
+        // STEP 1: Select a piece
         if (selectedSlot == null)
         {
             // Can only select your own piece
@@ -116,27 +169,22 @@ public class GameController : MonoBehaviour
                 return;
 
             selectedSlot = slot;
-            Debug.Log(slot + " Selected");
             selectedSlot.slotUI.Highlight(currentPlayer);
-
             return;
         }
 
-        //Try move to new slot
-        Debug.Log(
-    "Trying move from " + selectedSlot.slotNumber +
-    " to " + slot.slotNumber +
-    " | IsEmpty: " + !slot.IsOccupied +
-    " | Adjacent: " + IsAdjacent(selectedSlot, slot)
-);
-        // Must be empty
-        if (!slot.IsOccupied && IsAdjacent(selectedSlot, slot))
+        // STEP 2: Determine if player can "fly"
+        bool canFly = (currentPlayer == 1 && Player1PiecesOnBoard <= 3) ||
+                      (currentPlayer == 2 && Player2PiecesOnBoard <= 3);
+
+        // STEP 3: Try move
+        if (!slot.IsOccupied && (IsAdjacent(selectedSlot, slot) || canFly))
         {
             // Move piece
             slot.SetOccupant(currentPlayer);
             selectedSlot.ClearSlot();
 
-            // Clear highlight from previously selected slot
+            // Clear highlight
             selectedSlot.slotUI.ResetColor();
             selectedSlot = null;
 
@@ -147,51 +195,125 @@ public class GameController : MonoBehaviour
                 return;
             }
 
+            if (HasWon())
+            {
+                GameOver(currentPlayer);
+                return;
+            }
+
             SwitchPlayer();
         }
         else
         {
-            // Allow reselection (nice UX)
+            // Allow reselection
             if (slot.occupiedBy == currentPlayer)
             {
-                // Clear previous highlight
-                if (selectedSlot != null)
-                    selectedSlot.slotUI.ResetColor();
-
+                selectedSlot.slotUI.ResetColor();
                 selectedSlot = slot;
                 selectedSlot.slotUI.Highlight(currentPlayer);
             }
         }
     }
 
+    bool OpponentHasFreePiece()
+    {
+        int opponent = (currentPlayer == 1) ? 2 : 1;
+
+        foreach (var slot in allSlots)
+        {
+            // Check only opponent pieces
+            if (slot.occupiedBy == opponent)
+            {
+                // If ANY piece is NOT in a mill, return true
+                if (!slot.isInMill)
+                    return true;
+            }
+        }
+
+        // All opponent pieces are in mills
+        return false;
+    }
     public void HandleCapturing(SlotID slot)
     {
-        // Can only remove opponent cows
-        if (slot.occupiedBy == currentPlayer || !slot.IsOccupied || slot.isInMill)
+        int opponent = (currentPlayer == 1) ? 2 : 1;
+
+        // Must be opponent piece and occupied
+        if (slot.occupiedBy != opponent || !slot.IsOccupied)
             return;
 
+        bool opponentHasFreePiece = OpponentHasFreePiece();
+
+        //  If there ARE free pieces,cannot capture from a mill
+        if (slot.isInMill && opponentHasFreePiece)
+            return;
+
+        //  Valid capture
         slot.ClearSlot();
 
+        switch (currentPlayer)
+        {
+            case 1:
+                Player2PiecesOnBoard--;
+                break;
+            case 2:
+                Player1PiecesOnBoard--;
+                break;
+        }
+
+        if (HasWon())
+        {
+            GameOver(currentPlayer);
+            return;
+        }
         // After capture back to normal gameplay
-        if (placementCounter >= 10)
-        {
-            currentPhase = GamePhase.Moving;
-        }
-        else
-        {
-            currentPhase = GamePhase.Placing;
-        }
+        if (placementCounter >= 24)
+         { 
+            currentPhase = GamePhase.Moving; 
+         }
+         else
+         { 
+            currentPhase = GamePhase.Placing; 
+         }
 
         SwitchPlayer();
     }
+    void UpdateAllMills()
+    {
+        // 1. Reset all slots
+        foreach (var slot in allSlots)
+        {
+            slot.SetMillStatus(false);
+           
+        }
 
+        // 2. Recalculate mills
+        foreach (var mill in mills)
+        {
+            SlotID s1 = GetSlotByNumber(mill[0]);
+            SlotID s2 = GetSlotByNumber(mill[1]);
+            SlotID s3 = GetSlotByNumber(mill[2]);
+
+            if (s1.IsOccupied &&
+                s1.occupiedBy == s2.occupiedBy &&
+                s2.occupiedBy == s3.occupiedBy)
+            {
+                s1.SetMillStatus(true);
+                s2.SetMillStatus(true);
+                s3.SetMillStatus(true);
+
+                s1.slotUI.HighlightMill(s1.occupiedBy);
+                s2.slotUI.HighlightMill(s2.occupiedBy);
+                s3.slotUI.HighlightMill(s3.occupiedBy);
+            }
+        }
+    }
     public bool CheckMill(SlotID slot)
     {
+        UpdateAllMills();
         int player = slot.occupiedBy;
 
         foreach (var mill in mills)
         {
-            // Only check mills that include this slot
             if (!mill.Contains(slot.slotNumber))
                 continue;
 
@@ -204,17 +326,6 @@ public class GameController : MonoBehaviour
                 s3.occupiedBy == player)
             {
                 Debug.Log("MILL FOR PLAYER " + player);
-
-                // Visual feedback for mill
-                s1.SetMillStatus(true);
-                s2.SetMillStatus(true);
-                s3.SetMillStatus(true);
-
-                // Highlight the mill slots
-                s1.slotUI.HighlightMill(player);
-                s2.slotUI.HighlightMill(player);
-                s3.slotUI.HighlightMill(player);
-
                 return true;
             }
         }
@@ -229,5 +340,6 @@ public enum GamePhase
 {
     Placing,
     Moving,
-    Capturing
+    Capturing,
+    End
 }
