@@ -3152,9 +3152,6 @@ RectTransform:
   - {fileID: 371175574}
   - {fileID: 180882361}
   - {fileID: 445902756}
-  - {fileID: 2049876594}
-  - {fileID: 1591274044}
-  - {fileID: 2007337697}
   - {fileID: 1223153258}
   - {fileID: 2077280974}
   - {fileID: 1461948559}
@@ -3162,12 +3159,15 @@ RectTransform:
   - {fileID: 1857481290}
   - {fileID: 1435052158}
   - {fileID: 773585117}
-  - {fileID: 1909712545}
-  - {fileID: 907557584}
-  - {fileID: 54519396}
-  - {fileID: 1223069135}
-  - {fileID: 575314248}
+  - {fileID: 2049876594}
+  - {fileID: 2007337697}
   - {fileID: 1885401080}
+  - {fileID: 575314248}
+  - {fileID: 1223069135}
+  - {fileID: 54519396}
+  - {fileID: 907557584}
+  - {fileID: 1909712545}
+  - {fileID: 1591274044}
   m_Father: {fileID: 937558295}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5149,6 +5149,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   currentPlayer: 1
+  placementCounter: 0
+  selectedSlot: {fileID: 0}
+  allSlots:
+  - {fileID: 291850383}
+  - {fileID: 184659688}
+  - {fileID: 1681724673}
+  - {fileID: 1415741282}
+  - {fileID: 160272628}
+  - {fileID: 371175578}
+  - {fileID: 180882365}
+  - {fileID: 445902760}
+  - {fileID: 1223153262}
+  - {fileID: 2077280978}
+  - {fileID: 1461948563}
+  - {fileID: 1076456086}
+  - {fileID: 1857481294}
+  - {fileID: 1435052162}
+  - {fileID: 773585121}
+  - {fileID: 2049876598}
+  - {fileID: 2007337701}
+  - {fileID: 1885401084}
+  - {fileID: 575314252}
+  - {fileID: 1223069139}
+  - {fileID: 54519400}
+  - {fileID: 907557588}
+  - {fileID: 1909712549}
+  - {fileID: 1591274048}
   currentPhase: 0
 --- !u!1 &1289664690
 GameObject:

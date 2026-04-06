@@ -37,6 +37,25 @@ public class GameController : MonoBehaviour
     {24, new int[] {16,17,23}}
 };
 
+    int[][] mills = new int[][]
+{
+    new int[] {1,2,3}, new int[] {3,4,5}, new int[] {5,6,7}, new int[] {7,8,1},
+
+    new int[] {9,10,11}, new int[] {11,12,13}, new int[] {13,14,15}, new int[] {15,16,9},
+
+    new int[] {17,18,19}, new int[] {19,20,21}, new int[] {21,22,23}, new int[] {23,24,17},
+
+    new int[] {1,9,17}, new int[] {2,10,18}, new int[] {3,11,19}, new int[] {4,12,20},
+    new int[] {5,13,21}, new int[] {6,14,22}, new int[] {7,15,23}, new int[] {8,16,24}
+};
+
+    public SlotID[] allSlots;
+
+    SlotID GetSlotByNumber(int number)
+    {
+        return allSlots.First(s => s.slotNumber == number);
+    }
+
     void SwitchPlayer()
     {
         currentPlayer = (currentPlayer == 1) ? 2 : 1;
@@ -136,10 +155,9 @@ public class GameController : MonoBehaviour
             // Allow reselection (nice UX)
             if (slot.occupiedBy == currentPlayer)
             {
-                // selectedSlot.ResetColor();
                 selectedSlot = slot;
 
-                // slot.Highlight();
+
             }
         }
     }
@@ -160,6 +178,33 @@ public class GameController : MonoBehaviour
 
     public bool CheckMill(SlotID slot)
     {
+        int player = slot.occupiedBy;
+
+        foreach (var mill in mills)
+        {
+            // Only check mills that include this slot
+            if (!mill.Contains(slot.slotNumber))
+                continue;
+
+            SlotID s1 = GetSlotByNumber(mill[0]);
+            SlotID s2 = GetSlotByNumber(mill[1]);
+            SlotID s3 = GetSlotByNumber(mill[2]);
+
+            if (s1.occupiedBy == player &&
+                s2.occupiedBy == player &&
+                s3.occupiedBy == player)
+            {
+                Debug.Log("MILL FOR PLAYER " + player);
+
+                // Optional: mark them as part of a mill
+                s1.SetMillStatus(true);
+                s2.SetMillStatus(true);
+                s3.SetMillStatus(true);
+
+                return true;
+            }
+        }
+
         return false;
     }
 
