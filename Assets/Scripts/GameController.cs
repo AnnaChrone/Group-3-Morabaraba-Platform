@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -10,10 +11,12 @@ public class GameController : MonoBehaviour
     public int Player1PiecesOnBoard = 12;
     public int Player2PiecesOnBoard = 12;
     public bool END = false;
+    public TextMeshProUGUI CurrentTurnIndicator;
 
 
     public SlotID selectedSlot = null;
 
+    //stores all adjacent slots to each tile, to look for valid moves
     Dictionary<int, int[]> adjacency = new Dictionary<int, int[]>()
 {
     {1, new int[] {2, 8, 9}},
@@ -42,7 +45,7 @@ public class GameController : MonoBehaviour
     {24, new int[] {16,17,23}}
 };
 
-    // This is perfectly fine and actually preferred for Morabaraba!
+    // Stores all possible combinations for Mills
     int[][] mills = new int[][]
     {
     new int[] {1,2,3}, new int[] {3,4,5}, new int[] {5,6,7}, new int[] {7,8,1},
@@ -62,6 +65,17 @@ public class GameController : MonoBehaviour
     void SwitchPlayer()
     {
         currentPlayer = (currentPlayer == 1) ? 2 : 1;
+        switch (currentPlayer)
+        {
+            case 1:
+                CurrentTurnIndicator.color = Color.green;
+                CurrentTurnIndicator.text = "Player 1 Turn";
+                break;
+            case 2:
+                CurrentTurnIndicator.color = Color.red;
+                CurrentTurnIndicator.text = "Player 2 Turn";
+                break;
+        }
     }
     public bool HasWon()
     {
