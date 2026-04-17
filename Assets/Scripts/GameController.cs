@@ -291,7 +291,7 @@ public class GameController : MonoBehaviour
 
         SwitchPlayer();
     }
-    void UpdateAllMills()
+    void UpdateAllMills() //not working to change the colour
     {
         // 1. Reset all slots
         foreach (var slot in allSlots)
