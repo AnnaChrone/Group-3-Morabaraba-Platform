@@ -10,7 +10,6 @@ public class SlotID : MonoBehaviour
     [Header("State")]
     public int occupiedBy = 0;      // 0 = none, 1 = player1, 2 = player2
     public bool isInMill = false;
-
     private Image image;            // cached reference
 
     // Cleaner check
