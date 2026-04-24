@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,58 +22,67 @@ public class GameNetwork : NetworkBehaviour
     [Header("Network State - Synced to all clients")]
     public NetworkVariable<int> NetworkCurrentPlayer = new NetworkVariable<int>(1,
         NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     public NetworkVariable<int> NetworkPlacementCounter = new NetworkVariable<int>(0);
     public NetworkVariable<int> NetworkPlayer1Pieces = new NetworkVariable<int>(12);
     public NetworkVariable<int> NetworkPlayer2Pieces = new NetworkVariable<int>(12);
     public NetworkVariable<GamePhase> NetworkPhase = new NetworkVariable<GamePhase>(GamePhase.Placing);
-
-    // Make NetworkBoard public
     public NetworkList<int> NetworkBoard = new NetworkList<int>();
     public NetworkVariable<bool> NetworkGameEnded = new NetworkVariable<bool>(false);
     public NetworkVariable<int> NetworkWinner = new NetworkVariable<int>(0);
 
+    [Header("Ready State - Synced to all clients")]
+    public NetworkList<bool> NetworkPlayerReady = new NetworkList<bool>();
+
+    [Header("Lobby Settings - Synced to all clients")]
+    public NetworkVariable<string> NetworkGameType = new NetworkVariable<string>("12 Men's Morris",
+    NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    public NetworkVariable<string> NetworkGameTime = new NetworkVariable<string>("10:00",
+        NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    public event Action<string> OnGameTypeChanged;
+    public event Action<string> OnGameTimeChanged;
     public event Action<int> OnTurnChanged;
     public event Action<GamePhase> OnPhaseChanged;
     public event Action<int[]> OnBoardUpdated;
     public event Action<int, int> OnPieceCountChanged;
     public event Action<int> OnGameOver;
     public event Action<bool> OnGameEnded;
+    public event Action<int, bool> OnPlayerReadyChanged;
+    public event Action OnGameStarted;
 
     private int _localPlayerNumber;
-
     private string _currentLobbyCode;
+
     public string GetLobbyCode() => _currentLobbyCode;
-
     public static GameNetwork Instance { get; private set; }
+    public bool IsPersistent { get; private set; } = false;
 
-    [ServerRpc]
-    public void StartGameServerRpc()
-    {
-        // Ensure only server/host can start
-        if (!IsServer) return;
-
-        Debug.Log("Server: Game starting!");
-
-        // Notify all clients via ClientRpc
-        StartGameClientRpc();
-    }
-
-    [ClientRpc]
-    private void StartGameClientRpc()
-    {
-        Debug.Log("Client: Game starting signal received");
-        // Optional: Trigger any client-side game start logic here
-        // The UI switch is handled locally by each client's LobbyUI
-    }
+    // ===== UNITY MESSAGES =====
 
     void Awake()
     {
-        if (NetworkManager.Singleton == null)
+        if (NetworkManager.Singleton != null)
         {
-            Debug.LogError("NetworkManager not found in scene!");
-            enabled = false;
+            DontDestroyOnLoad(NetworkManager.Singleton.gameObject);
+        }
+
+        if (Instance == null)
+        {
+            Instance = this;
+            if (!IsPersistent)
+            {
+                DontDestroyOnLoad(gameObject);
+                IsPersistent = true;
+            }
+        }
+        else
+        {
+            Destroy(gameObject);
             return;
         }
+
         RegisterNetworkCallbacks();
     }
 
@@ -82,7 +91,6 @@ public class GameNetwork : NetworkBehaviour
         NetworkCurrentPlayer.OnValueChanged += (oldVal, newVal) => OnTurnChanged?.Invoke(newVal);
         NetworkPhase.OnValueChanged += (oldVal, newVal) => OnPhaseChanged?.Invoke(newVal);
 
-        // Fix: NetworkList OnListChanged takes NetworkListEvent<int> parameter
         NetworkBoard.OnListChanged += (NetworkListEvent<int> changeEvent) =>
         {
             OnBoardUpdated?.Invoke(GetBoardArray());
@@ -92,34 +100,63 @@ public class GameNetwork : NetworkBehaviour
         NetworkPlayer2Pieces.OnValueChanged += (oldVal, newVal) => OnPieceCountChanged?.Invoke(2, newVal);
         NetworkWinner.OnValueChanged += (oldVal, newVal) => { if (newVal > 0) OnGameOver?.Invoke(newVal); };
         NetworkGameEnded.OnValueChanged += (oldVal, newVal) => OnGameEnded?.Invoke(newVal);
+        NetworkGameType.OnValueChanged += (oldVal, newVal) => OnGameTypeChanged?.Invoke(newVal);
+        NetworkGameTime.OnValueChanged += (oldVal, newVal) => OnGameTimeChanged?.Invoke(newVal);
+
+        NetworkPlayerReady.OnListChanged += (NetworkListEvent<bool> changeEvent) =>
+        {
+            if (changeEvent.Index < NetworkPlayerReady.Count)
+            {
+                int playerNum = changeEvent.Index + 1;
+                bool isReady = NetworkPlayerReady[changeEvent.Index];
+                OnPlayerReadyChanged?.Invoke(playerNum, isReady);
+            }
+        };
     }
 
     public override void OnNetworkSpawn()
     {
         if (IsServer)
         {
-            // Initialize board with 25 zeros (index 0 unused, 1-24 used)
-            NetworkBoard.Clear();
-            for (int i = 0; i < 25; i++)
-            {
-                NetworkBoard.Add(0);
-            }
+            InitializeBoard();
+            InitializeReadyList(2);
         }
         base.OnNetworkSpawn();
     }
 
+    // ===== BOARD & GAME STATE =====
+
+    private void InitializeBoard()
+    {
+        NetworkBoard.Clear();
+        for (int i = 0; i < 25; i++)
+        {
+            NetworkBoard.Add(0);
+        }
+    }
+
+    public void InitializeReadyList(int playerCount)
+    {
+        NetworkPlayerReady.Clear();
+        for (int i = 0; i < playerCount; i++)
+        {
+            NetworkPlayerReady.Add(false);
+        }
+    }
+
     private int[] GetBoardArray()
     {
-        int[] board = new int[NetworkBoard.Count];
-        for (int i = 0; i < NetworkBoard.Count; i++)
+        int[] board = new int[Mathf.Max(NetworkBoard.Count, 25)];
+        for (int i = 0; i < NetworkBoard.Count && i < board.Length; i++)
         {
             board[i] = NetworkBoard[i];
         }
         return board;
     }
 
-    // Add this method back for GameController
     public T GetNetworkValue<T>(NetworkVariable<T> variable) => variable.Value;
+
+    // ===== MOVE REQUESTS (Client → Server) =====
 
     public void RequestMove(int slotNumber)
     {
@@ -131,9 +168,16 @@ public class GameNetwork : NetworkBehaviour
     private void RequestMoveServerRpc(int slotNumber, ulong clientId)
     {
         int playerNumber = GetPlayerNumber(clientId);
+
         if (playerNumber != NetworkCurrentPlayer.Value)
         {
             Debug.LogWarning($"Invalid turn: Player {playerNumber} tried to move during Player {NetworkCurrentPlayer.Value}'s turn");
+            return;
+        }
+
+        if (NetworkGameEnded.Value)
+        {
+            Debug.LogWarning("Game has already ended");
             return;
         }
 
@@ -159,7 +203,7 @@ public class GameNetwork : NetworkBehaviour
             NetworkPlacementCounter.Value, NetworkPlayer1Pieces.Value, NetworkPlayer2Pieces.Value);
 
         // Update NetworkList
-        for (int i = 0; i < result.NewBoardState.Length; i++)
+        for (int i = 0; i < result.NewBoardState.Length && i < NetworkBoard.Count; i++)
         {
             NetworkBoard[i] = result.NewBoardState[i];
         }
@@ -183,18 +227,83 @@ public class GameNetwork : NetworkBehaviour
         }
     }
 
-    // ===== LOBBY & RELAY INTEGRATION =====
+    // ===== READY STATE (Client → Server) =====
+
+    [ServerRpc]
+    public void SetReadyServerRpc(int playerNumber, bool isReady)
+    {
+        if (playerNumber < 1 || playerNumber > NetworkPlayerReady.Count)
+            return;
+
+        int index = playerNumber - 1;
+        if (index < NetworkPlayerReady.Count)
+        {
+            NetworkPlayerReady[index] = isReady;
+            Debug.Log($"[Server] Player {playerNumber} ready: {isReady}");
+        }
+    }
+
+    public void SetLocalPlayerReady(bool isReady)
+    {
+        if (!IsClient) return;
+        int playerNum = GetLocalPlayerNumber();
+        SetReadyServerRpc(playerNum, isReady);
+    }
+
+    public bool AreAllPlayersReady()
+    {
+        if (NetworkPlayerReady.Count < 2) return false;
+
+        for (int i = 0; i < NetworkPlayerReady.Count; i++)
+        {
+            if (!NetworkPlayerReady[i])
+                return false;
+        }
+        return true;
+    }
+
+    // ===== GAME START (Host → All Clients) =====
+
+    [ServerRpc]
+    public void StartGameServerRpc()
+    {
+        if (!IsServer) return;
+        Debug.Log("Server: Game starting!");
+        StartGameClientRpc();
+    }
+
+    [ClientRpc]
+    public void StartGameClientRpc()
+    {
+        Debug.Log("Client: Game starting signal received");
+        OnGameStarted?.Invoke();
+    }
+
+    // ===== LOBBY CREATION (Host) =====
 
     public async Task<bool> CreateLobbyAsync(string lobbyName = "Morabaraba")
     {
         try
         {
+            Debug.Log("[CreateLobby] Starting lobby creation...");
+
             await UnityServices.InitializeAsync();
-            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            Debug.Log("[CreateLobby] Unity Services initialized");
 
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                Debug.Log("[CreateLobby] Authenticated as: " + AuthenticationService.Instance.PlayerId);
+            }
+
+            Debug.Log("[CreateLobby] Creating Relay allocation...");
             var relayAllocation = await RelayService.Instance.CreateAllocationAsync(2);
-            string relayJoinCode = await RelayService.Instance.GetJoinCodeAsync(relayAllocation.AllocationId);
+            Debug.Log("[CreateLobby] Relay allocation created");
 
+            string relayJoinCode = await RelayService.Instance.GetJoinCodeAsync(relayAllocation.AllocationId);
+            Debug.Log("[CreateLobby] Relay join code obtained");
+
+            Debug.Log("[CreateLobby] Creating Lobby Service lobby...");
             var lobby = await LobbyService.Instance.CreateLobbyAsync(lobbyName, 2,
                 new CreateLobbyOptions
                 {
@@ -205,73 +314,146 @@ public class GameNetwork : NetworkBehaviour
                     }
                 });
 
-            // Store the lobby code for UI access
+            Debug.Log($"[CreateLobby] LOBBY CREATED: {lobby.LobbyCode}");
+
             _currentLobbyCode = lobby.LobbyCode;
 
+            if (string.IsNullOrEmpty(_currentLobbyCode))
+            {
+                Debug.LogError("[CreateLobby] LobbyCode is NULL or EMPTY!");
+                return false;
+            }
+
+            Debug.Log("[CreateLobby] Setting up Relay transport...");
             var serverData = AllocationUtils.ToRelayServerData(relayAllocation, "dtls");
+
+            if (transport == null)
+            {
+                Debug.LogError("[CreateLobby] UnityTransport is NULL!");
+                return false;
+            }
+
             transport.SetRelayServerData(serverData);
+
+            Debug.Log("[CreateLobby] Starting NetworkManager as Host...");
+            if (NetworkManager.Singleton == null)
+            {
+                Debug.LogError("[CreateLobby] NetworkManager.Singleton is NULL!");
+                return false;
+            }
+
             NetworkManager.Singleton.StartHost();
+            Debug.Log("[CreateLobby] Host started successfully!");
 
             _localPlayerNumber = 1;
             AssignLocalPlayer(1);
 
-            Debug.Log($"Lobby created: {lobby.Id} | Code: {lobby.LobbyCode}");
+            Debug.Log($"[CreateLobby] COMPLETE! Share code: {_currentLobbyCode}");
             return true;
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to create lobby: {e.Message}");
+            Debug.LogError($"[CreateLobby] EXCEPTION: {e.Message}");
+            Debug.LogError($"[CreateLobby] Stack: {e.StackTrace}");
             _currentLobbyCode = null;
             return false;
         }
     }
 
+    // ===== LOBBY JOINING (Client) =====
+
     public async Task<bool> JoinLobbyAsync(string lobbyCode)
     {
         try
         {
+            Debug.Log($"[JoinLobby] Attempting to join: {lobbyCode}");
+
             await UnityServices.InitializeAsync();
-            await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
-            var query = new QueryLobbiesOptions
+            if (!AuthenticationService.Instance.IsSignedIn)
             {
-                Filters = new List<QueryFilter>
-                {
-                    new QueryFilter(
-                        QueryFilter.FieldOptions.Name,
-                        lobbyCode,
-                        QueryFilter.OpOptions.EQ)
-                }
-            };
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            }
 
-            var result = await LobbyService.Instance.QueryLobbiesAsync(query);
-            if (result.Results.Count == 0)
+            Debug.Log("[JoinLobby] Joining by code...");
+            var lobby = await LobbyService.Instance.JoinLobbyByCodeAsync(lobbyCode);
+            Debug.Log($"[JoinLobby] Successfully joined: {lobby.Name}");
+
+            if (lobby.Data == null || !lobby.Data.ContainsKey("RelayJoinCode"))
             {
-                Debug.LogError("Lobby not found");
+                Debug.LogError("[JoinLobby] Lobby missing RelayJoinCode!");
                 return false;
             }
 
-            var lobby = result.Results[0];
             string relayJoinCode = lobby.Data["RelayJoinCode"].Value;
+            Debug.Log("[JoinLobby] Got Relay join code");
 
             var relayAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+            Debug.Log("[JoinLobby] Joined Relay allocation");
+
+            if (transport == null)
+            {
+                Debug.LogError("[JoinLobby] UnityTransport is NULL!");
+                return false;
+            }
 
             var serverData = AllocationUtils.ToRelayServerData(relayAllocation, "dtls");
             transport.SetRelayServerData(serverData);
+
+            if (NetworkManager.Singleton == null)
+            {
+                Debug.LogError("[JoinLobby] NetworkManager.Singleton is NULL!");
+                return false;
+            }
+
             NetworkManager.Singleton.StartClient();
+            Debug.Log("[JoinLobby] Started as Client");
 
             _localPlayerNumber = 2;
             AssignLocalPlayer(2);
 
-            Debug.Log("Joined lobby");
+            Debug.Log($"[JoinLobby] CONNECTED! You are Player {_localPlayerNumber}");
             return true;
         }
         catch (Exception e)
         {
-            Debug.LogError($"Failed to join lobby: {e.Message}");
+            string errorMsg = e.Message.Contains("Lobby not found") || e.Message.Contains("404")
+                ? "Lobby code invalid, expired, or full"
+                : e.Message;
+
+            Debug.LogError($"[JoinLobby] FAILED: {errorMsg}");
             return false;
         }
     }
+
+    public async Task LeaveLobbyIfExists()
+{
+    try
+    {
+        // Check if NetworkManager is connected (indicates we're in a lobby)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
+        {
+            Debug.Log("[LeaveLobby] NetworkManager is connected, shutting down...");
+            NetworkManager.Singleton.Shutdown();
+            Debug.Log("[LeaveLobby] NetworkManager shutdown complete");
+        }
+        
+        // Note: Unity Lobby Service automatically handles leaving when shutting down
+        // No explicit LeaveLobbyAsync needed in most cases
+        
+        // Reset local state
+        _localPlayerNumber = 0;
+        _currentLobbyCode = null;
+        
+        Debug.Log("[LeaveLobby] Cleanup complete");
+    }
+    catch (Exception e)
+    {
+        Debug.LogError($"[LeaveLobby] Error during cleanup: {e.Message}");
+    }
+}
+
+    // ===== PLAYER MANAGEMENT =====
 
     private void AssignLocalPlayer(int playerNumber)
     {
@@ -280,7 +462,9 @@ public class GameNetwork : NetworkBehaviour
     }
 
     public int GetLocalPlayerNumber() => _localPlayerNumber;
-    public bool IsLocalPlayerTurn() => NetworkCurrentPlayer.Value == _localPlayerNumber && !NetworkGameEnded.Value;
+
+    public bool IsLocalPlayerTurn() =>
+        NetworkCurrentPlayer.Value == _localPlayerNumber && !NetworkGameEnded.Value;
 
     private int GetPlayerNumber(ulong clientId)
     {
@@ -289,10 +473,51 @@ public class GameNetwork : NetworkBehaviour
         return (_localPlayerNumber == 1) ? 2 : 1;
     }
 
+    // ===== UTILITY RPCs =====
+
     [ClientRpc]
     public void SyncBoardVisualsClientRpc(int[] boardState)
     {
         OnBoardUpdated?.Invoke(boardState);
+    }
+
+    [ServerRpc]
+    public void UpdateLobbySettingsServerRpc(string gameType, string gameTime)
+    {
+        // Only server can update these
+        if (!IsServer) return;
+
+        NetworkGameType.Value = gameType;
+        NetworkGameTime.Value = gameTime;
+
+        Debug.Log($"[Server] Lobby settings updated: {gameType} | {gameTime}");
+    }
+
+    // Call this when host changes dropdowns
+    public void UpdateLobbySettings(string gameType, string gameTime)
+    {
+        if (!IsClient) return; // Only clients call ServerRpc
+
+        UpdateLobbySettingsServerRpc(gameType, gameTime);
+    }
+
+    // Helper to get current settings (works for host and client)
+    public string GetCurrentGameType() => NetworkGameType.Value;
+    public string GetCurrentGameTime() => NetworkGameTime.Value;
+
+    // ===== CLEANUP =====
+
+    private void OnDestroy()
+    {
+        // Clear events to prevent memory leaks
+        OnTurnChanged = null;
+        OnPhaseChanged = null;
+        OnBoardUpdated = null;
+        OnPieceCountChanged = null;
+        OnGameOver = null;
+        OnGameEnded = null;
+        OnPlayerReadyChanged = null;
+        OnGameStarted = null;
     }
 }
 
