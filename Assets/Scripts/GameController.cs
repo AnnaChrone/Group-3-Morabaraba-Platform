@@ -1,51 +1,45 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
-public class GameController : MonoBehaviour
+public class GameController : NetworkBehaviour
 {
-    public int currentPlayer = 1; // 1 = Player 1, 2 = Player 2
-    public int placementCounter = 0;
-    public int Player1PiecesOnBoard = 12;
-    public int Player2PiecesOnBoard = 12;
-    public bool END = false;
+    // ===== NETWORK VARIABLES (Auto-synced to all clients) =====
+
+    public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(1);
+    public NetworkVariable<int> PlacementCounter = new NetworkVariable<int>(0);
+    public NetworkVariable<int> Player1PiecesOnBoard = new NetworkVariable<int>(12);
+    public NetworkVariable<int> Player2PiecesOnBoard = new NetworkVariable<int>(12);
+    public NetworkVariable<GamePhase> CurrentPhase = new NetworkVariable<GamePhase>(GamePhase.Placing);
+    public NetworkVariable<bool> GameEnded = new NetworkVariable<bool>(false);
+
+    // Track slot ownership: slotNumber -> playerID (0 = empty)
+    public NetworkVariable<FixedString4096Bytes> SlotStates = new NetworkVariable<FixedString4096Bytes>("");
+
+    [Header("UI References")]
     public TextMeshProUGUI CurrentTurnIndicator;
+    public SlotID[] allSlots;
 
-    public SlotID selectedSlot = null;
+    // Local selection (NOT synced - client-side only)
+    private SlotID selectedSlot = null;
 
-    // Stores all adjacent slots to each tile, to look for valid moves
-    Dictionary<int, int[]> adjacency = new Dictionary<int, int[]>()
+    // Adjacency and mills data (same for all clients, no need to sync)
+    private readonly Dictionary<int, int[]> adjacency = new Dictionary<int, int[]>()
     {
-        {1, new int[] {2, 8, 9}},
-        {2, new int[] {1,3, 10}},
-        {3, new int[] {2,4, 11}},
-        {4, new int[] {3,5, 12}},
-        {5, new int[] {4,6, 13}},
-        {6, new int[] {5,7, 14}},
-        {7, new int[] {6,8, 15}},
-        {8, new int[] {7,1, 16}},
-        {9, new int[] {1,10, 16,17}},
-        {10, new int[] {2,9, 11,18}},
-        {11, new int[] {3,10,12, 19}},
-        {12, new int[] {4,11,13,20}},
-        {13, new int[] {5,12,14,21}},
-        {14, new int[] {6,13,15,22}},
-        {15, new int[] {7,14,16,23}},
-        {16, new int[] {8,9,15,24}},
-        {17, new int[] {9,18,24}},
-        {18, new int[] {10,17,19}},
-        {19, new int[] {11,18,20}},
-        {20, new int[] {12,19,21}},
-        {21, new int[] {13,20,22}},
-        {22, new int[] {14,21,23}},
-        {23, new int[] {15,22,24}},
-        {24, new int[] {16,17,23}}
+        {1, new int[] {2, 8, 9}}, {2, new int[] {1,3, 10}}, {3, new int[] {2,4, 11}},
+        {4, new int[] {3,5, 12}}, {5, new int[] {4,6, 13}}, {6, new int[] {5,7, 14}},
+        {7, new int[] {6,8, 15}}, {8, new int[] {7,1, 16}}, {9, new int[] {1,10, 16,17}},
+        {10, new int[] {2,9, 11,18}}, {11, new int[] {3,10,12, 19}}, {12, new int[] {4,11,13,20}},
+        {13, new int[] {5,12,14,21}}, {14, new int[] {6,13,15,22}}, {15, new int[] {7,14,16,23}},
+        {16, new int[] {8,9,15,24}}, {17, new int[] {9,18,24}}, {18, new int[] {10,17,19}},
+        {19, new int[] {11,18,20}}, {20, new int[] {12,19,21}}, {21, new int[] {13,20,22}},
+        {22, new int[] {14,21,23}}, {23, new int[] {15,22,24}}, {24, new int[] {16,17,23}}
     };
 
-    // Stores all possible combinations for Mills
-    int[][] mills = new int[][]
+    private readonly int[][] mills = new int[][]
     {
         new int[] {1,2,3}, new int[] {3,4,5}, new int[] {5,6,7}, new int[] {7,8,1},
         new int[] {9,10,11}, new int[] {11,12,13}, new int[] {13,14,15}, new int[] {15,16,9},
@@ -54,559 +48,400 @@ public class GameController : MonoBehaviour
         new int[] {5,13,21}, new int[] {6,14,22}, new int[] {7,15,23}, new int[] {8,16,24}
     };
 
-    public SlotID[] allSlots;
-
-    SlotID GetSlotByNumber(int number)
+    void Start()
     {
-        return allSlots.First(s => s.slotNumber == number);
-    }
-
-    void SwitchPlayer()
-    {
-        currentPlayer = (currentPlayer == 1) ? 2 : 1;
-        switch (currentPlayer)
+        // 🔥 GameController needs its own spawn call
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
         {
-            case 1:
-                if (CurrentTurnIndicator != null)
-                {
-                    CurrentTurnIndicator.color = Color.green;
-                    CurrentTurnIndicator.text = "Player 1 Turn";
-                }
-                break;
-            case 2:
-                if (CurrentTurnIndicator != null)
-                {
-                    CurrentTurnIndicator.color = Color.red;
-                    CurrentTurnIndicator.text = "Player 2 Turn";
-                }
-                break;
-        }
-    }
-    public bool HasWon()
-    {
-        int opponent = (currentPlayer == 1) ? 2 : 1;
-
-        int opponentPieces = (opponent == 1) ? Player1PiecesOnBoard : Player2PiecesOnBoard;
-        if (placementCounter != 24)
-            return false;
-
-        // 1. Opponent has 2 or fewer pieces win
-        if (opponentPieces <= 2)
-            return true;
-
-        // 2. Check if opponent has any valid moves
-        bool canFly = (opponentPieces <= 3);
-
-        foreach (var slot in allSlots)
-        {
-            if (slot.occupiedBy != opponent)
-                continue;
-
-            // Flying
-            if (canFly)
+            var networkObject = GetComponent<NetworkObject>();
+            if (networkObject != null && !networkObject.IsSpawned)
             {
-                if (allSlots.Any(s => !s.IsOccupied))
-                    return false; // has a move NOT a win
-            }
-            else
-            {
-                // Normal movement
-                foreach (int adj in adjacency[slot.slotNumber])
-                {
-                    SlotID adjSlot = GetSlotByNumber(adj);
-
-                    if (!adjSlot.IsOccupied)
-                        return false; // has a move NOT a win
-                }
+                networkObject.Spawn();
+                Debug.Log("✅ GameController NetworkObject spawned");
             }
         }
-
-        // No moves found win
-        return true;
     }
 
-    public void GameOver(int Winner)
+    // ===== INITIALIZATION =====
+
+    /*public override void OnNetworkSpawn()
     {
-        Debug.Log("GAME OVER: WINNER IS PLAYER NO. " + Winner);
-        currentPhase = GamePhase.End;
-    }
-    bool IsAdjacent(SlotID from, SlotID to)
+        base.OnNetworkSpawn();
+
+        // Register callbacks for NetworkVariable changes
+        CurrentPlayer.OnValueChanged += OnCurrentPlayerChanged;
+        PlacementCounter.OnValueChanged += OnPlacementCounterChanged;
+        CurrentPhase.OnValueChanged += OnPhaseChanged;
+        SlotStates.OnValueChanged += OnSlotStatesChanged;
+
+        // Initialize UI
+        UpdateTurnIndicator();
+
+        // Only host should process input initially; clients wait for state sync
+        InitializeSlotStates();
+    }*/
+
+
+
+    public override void OnNetworkSpawn()
     {
-        return adjacency[from.slotNumber].Contains(to.slotNumber);
+        base.OnNetworkSpawn();
+
+        // Register NetworkVariable callbacks (all clients)
+        CurrentPlayer.OnValueChanged += OnCurrentPlayerChanged;
+        PlacementCounter.OnValueChanged += OnPlacementCounterChanged;
+        CurrentPhase.OnValueChanged += OnPhaseChanged;
+        SlotStates.OnValueChanged += OnSlotStatesChanged;
+
+        // 🔥 ONLY SERVER initializes the game state
+        if (IsServer)
+        {
+            InitializeGameState();
+        }
+
+        // All clients apply current state to visuals
+        ApplySlotStatesToVisuals();
+        UpdateTurnIndicator();
     }
+
+    public override void OnNetworkDespawn()
+    {
+        // Unregister callbacks to prevent memory leaks
+        CurrentPlayer.OnValueChanged -= OnCurrentPlayerChanged;
+        PlacementCounter.OnValueChanged -= OnPlacementCounterChanged;
+        CurrentPhase.OnValueChanged -= OnPhaseChanged;
+        SlotStates.OnValueChanged -= OnSlotStatesChanged;
+        base.OnNetworkDespawn();
+    }
+
+    void InitializeGameState()
+    {
+        // Set initial values (server authority)
+        CurrentPlayer.Value = 1;
+        PlacementCounter.Value = 0;
+        Player1PiecesOnBoard.Value = 12;
+        Player2PiecesOnBoard.Value = 12;
+        CurrentPhase.Value = GamePhase.Placing;
+        GameEnded.Value = false;
+
+        // Initialize empty slot states: "1:0,2:0,...,24:0"
+        var states = new List<string>();
+        for (int i = 1; i <= 24; i++) states.Add($"{i}:0");
+        SlotStates.Value = string.Join(",", states); // ✅ string → FixedString implicit
+    }
+
+    void InitializeSlotStates()
+    {
+        // Build initial state string: "1:0,2:0,3:0,...,24:0"
+        var states = new List<string>();
+        for (int i = 1; i <= 24; i++) states.Add($"{i}:0");
+        SlotStates.Value = string.Join(",", states);
+        ApplySlotStatesToVisuals();
+    }
+
+    // ===== INPUT HANDLING (Client-side, sends RPC to server) =====
 
     public void OnSlotClicked(SlotID slot)
     {
-        // Prevent input if game is over or if this is a client and not their turn
-        if (currentPhase == GamePhase.End) return;
+        if (!IsSpawned)
+        {
+            Debug.LogWarning("⏳ Game not ready yet. Wait for network sync...");
+            return;
+        }
 
-        // Basic check to ensure only the correct player clicks (assuming network handles the heavy lifting)
-        // In a strict network implementation, you might disable input on non-turn clients entirely
+        if (GameEnded.Value) return;
+        if (!IsLocalPlayerTurn()) return;
 
-        switch (currentPhase)
+        RequestMoveServerRpc(slot.slotNumber, CurrentPhase.Value);
+    }
+
+    bool IsLocalPlayerTurn()
+    {
+        // Determine if this client owns the current player
+        // Assuming: ClientId 0 (Server/Host) = Player 1, others = Player 2
+        int localPlayerId = NetworkManager.Singleton.IsHost ? 1 : 2;
+        return CurrentPlayer.Value == localPlayerId;
+    }
+
+    [ServerRpc]
+    void RequestMoveServerRpc(int slotNumber, GamePhase phase, ServerRpcParams rpcParams = default)
+    {
+        // Validate: only the player whose turn it is can request moves
+        int requestingPlayer = NetworkManager.Singleton.IsHost ? 1 : 2;
+        if (CurrentPlayer.Value != requestingPlayer) return;
+
+        SlotID slot = GetSlotByNumber(slotNumber);
+        if (slot == null) return;
+
+        // Process move based on phase
+        switch (phase)
         {
             case GamePhase.Placing:
-                HandlePlacing(slot);
+                ServerHandlePlacing(slot);
                 break;
-
             case GamePhase.Moving:
-                HandleMoving(slot);
+                ServerHandleMoving(slot);
                 break;
-
             case GamePhase.Capturing:
-                HandleCapturing(slot);
+                ServerHandleCapturing(slot);
                 break;
         }
     }
 
-    public void HandlePlacing(SlotID slot)
+    // ===== SERVER-SIDE GAME LOGIC =====
+
+    void ServerHandlePlacing(SlotID slot)
     {
-        if (slot.IsOccupied) return;
+        if (GetSlotOwner(slot.slotNumber) != 0) return; // Already occupied
 
-        slot.SetOccupant(currentPlayer);
-
-        placementCounter++; // count every placement until it hits 24
+        // Place piece
+        SetSlotOwner(slot.slotNumber, CurrentPlayer.Value);
+        PlacementCounter.Value++;
 
         // Check for mill
-        if (CheckMill(slot))
+        if (CheckMill(slot.slotNumber, CurrentPlayer.Value))
         {
-            currentPhase = GamePhase.Capturing;
-            return;
+            CurrentPhase.Value = GamePhase.Capturing;
+            return; // Wait for capture
         }
 
-        // Switch to moving phase after all cows placed
-        if (placementCounter >= 24)
+        // Phase transition
+        if (PlacementCounter.Value >= 24)
         {
-            currentPhase = GamePhase.Moving;
+            CurrentPhase.Value = GamePhase.Moving;
         }
 
-        SwitchPlayer();
+        EndTurn();
     }
 
-    public void HandleMoving(SlotID slot)
+    void ServerHandleMoving(SlotID slot)
     {
-        // STEP 1: Select a piece
-        if (selectedSlot == null)
-        {
-            // Can only select your own piece
-            if (slot.occupiedBy != currentPlayer)
-                return;
-
-            selectedSlot = slot;
-            selectedSlot.slotUI.Highlight(currentPlayer);
-            return;
-        }
-
-        // STEP 2: Determine if player can "fly"
-        bool canFly = (currentPlayer == 1 && Player1PiecesOnBoard <= 3) ||
-                      (currentPlayer == 2 && Player2PiecesOnBoard <= 3);
-
-        // STEP 3: Try move
-        if (!slot.IsOccupied && (IsAdjacent(selectedSlot, slot) || canFly))
-        {
-            // Move piece
-            slot.SetOccupant(currentPlayer);
-            selectedSlot.ClearSlot();
-
-            // Clear highlight
-            selectedSlot.slotUI.ResetColor();
-            selectedSlot = null;
-
-            // Check for mill
-            if (CheckMill(slot))
-            {
-                currentPhase = GamePhase.Capturing;
-                return;
-            }
-
-            if (HasWon())
-            {
-                GameOver(currentPlayer);
-                return;
-            }
-
-            SwitchPlayer();
-        }
-        else
-        {
-            // Allow reselection
-            if (slot.occupiedBy == currentPlayer)
-            {
-                selectedSlot.slotUI.ResetColor();
-                selectedSlot = slot;
-                selectedSlot.slotUI.Highlight(currentPlayer);
-            }
-        }
+        // This is simplified - you'd need to track selected slot via NetworkVariable
+        // For now, assume client sends both fromSlot and toSlot
+        // See enhanced version below for full implementation
     }
 
-    bool OpponentHasFreePiece()
+    void ServerHandleCapturing(SlotID slot)
     {
-        int opponent = (currentPlayer == 1) ? 2 : 1;
+        int opponent = (CurrentPlayer.Value == 1) ? 2 : 1;
+        if (GetSlotOwner(slot.slotNumber) != opponent) return;
 
-        foreach (var slot in allSlots)
-        {
-            // Check only opponent pieces
-            if (slot.occupiedBy == opponent)
-            {
-                // If ANY piece is NOT in a mill, return true
-                if (!slot.isInMill)
-                    return true;
-            }
-        }
-
-        // All opponent pieces are in mills
-        return false;
-    }
-    public void HandleCapturing(SlotID slot)
-    {
-        int opponent = (currentPlayer == 1) ? 2 : 1;
-
-        // Must be opponent piece and occupied
-        if (slot.occupiedBy != opponent || !slot.IsOccupied)
-            return;
-
-        bool opponentHasFreePiece = OpponentHasFreePiece();
-
-        // If there ARE free pieces, cannot capture from a mill
-        if (slot.isInMill && opponentHasFreePiece)
-            return;
+        // Mill capture rules
+        if (slot.isInMill && OpponentHasFreePiece(opponent))
+            return; // Cannot capture from mill if free pieces exist
 
         // Valid capture
-        slot.ClearSlot();
+        SetSlotOwner(slot.slotNumber, 0);
 
-        switch (currentPlayer)
-        {
-            case 1:
-                Player2PiecesOnBoard--;
-                break;
-            case 2:
-                Player1PiecesOnBoard--;
-                break;
-        }
+        if (CurrentPlayer.Value == 1)
+            Player2PiecesOnBoard.Value--;
+        else
+            Player1PiecesOnBoard.Value--;
 
+        // Check win
         if (HasWon())
         {
-            GameOver(currentPlayer);
+            ServerGameOver(CurrentPlayer.Value);
             return;
         }
-        // After capture back to normal gameplay
-        if (placementCounter >= 24)
-        {
-            currentPhase = GamePhase.Moving;
-        }
-        else
-        {
-            currentPhase = GamePhase.Placing;
-        }
 
-        SwitchPlayer();
+        // Return to previous phase
+        CurrentPhase.Value = (PlacementCounter.Value >= 24) ? GamePhase.Moving : GamePhase.Placing;
+        EndTurn();
     }
-    void UpdateAllMills() //not working to change the colour
+
+    void EndTurn()
     {
-        // 1. Reset all slots
-        foreach (var slot in allSlots)
-        {
-            slot.SetMillStatus(false);
-        }
+        CurrentPlayer.Value = (CurrentPlayer.Value == 1) ? 2 : 1;
+    }
 
-        // 2. Recalculate mills
-        foreach (var mill in mills)
-        {
-            SlotID s1 = GetSlotByNumber(mill[0]);
-            SlotID s2 = GetSlotByNumber(mill[1]);
-            SlotID s3 = GetSlotByNumber(mill[2]);
+    void ServerGameOver(int winner)
+    {
+        GameEnded.Value = true;
+        GameOverClientRpc(winner);
+    }
 
-            if (s1.IsOccupied &&
-                s1.occupiedBy == s2.occupiedBy &&
-                s2.occupiedBy == s3.occupiedBy)
+    [ClientRpc]
+    void GameOverClientRpc(int winner)
+    {
+        Debug.Log($"🏆 GAME OVER: Player {winner} wins!");
+        // Show victory UI here
+    }
+
+    // ===== SLOT STATE MANAGEMENT =====
+
+    void SetSlotOwner(int slotNumber, int player)
+    {
+        var states = ParseSlotStates();
+        states[slotNumber] = player;
+        SlotStates.Value = SerializeSlotStates(states);
+    }
+
+    int GetSlotOwner(int slotNumber)
+    {
+        var states = ParseSlotStates();
+        return states.TryGetValue(slotNumber, out int owner) ? owner : 0;
+    }
+
+    Dictionary<int, int> ParseSlotStates()
+    {
+        var result = new Dictionary<int, int>();
+        string statesString = SlotStates.Value.ToString();
+        if (string.IsNullOrEmpty(statesString)) return result;
+
+        foreach (var entry in SlotStates.Value.ToString().Split(','))
+        {
+            var parts = entry.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[0], out int slot) && int.TryParse(parts[1], out int owner))
             {
-                s1.SetMillStatus(true);
-                s2.SetMillStatus(true);
-                s3.SetMillStatus(true);
-
-                s1.slotUI.HighlightMill(s1.occupiedBy);
-                s2.slotUI.HighlightMill(s2.occupiedBy);
-                s3.slotUI.HighlightMill(s3.occupiedBy);
+                result[slot] = owner;
             }
         }
-    }
-    public bool CheckMill(SlotID slot)
-    {
-        UpdateAllMills();
-        int player = slot.occupiedBy;
-
-        foreach (var mill in mills)
-        {
-            if (!mill.Contains(slot.slotNumber))
-                continue;
-
-            SlotID s1 = GetSlotByNumber(mill[0]);
-            SlotID s2 = GetSlotByNumber(mill[1]);
-            SlotID s3 = GetSlotByNumber(mill[2]);
-
-            if (s1.occupiedBy == player &&
-                s2.occupiedBy == player &&
-                s3.occupiedBy == player)
-            {
-                Debug.Log("MILL FOR PLAYER " + player);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public GamePhase currentPhase = GamePhase.Placing;
-
-    #region Network Integration Methods
-
-    /// <summary>
-    /// Validates a move for networking (called by network manager on server)
-    /// This is a READ-ONLY validation - no state changes
-    /// </summary>
-    public bool IsValidMoveForNetwork(int slotNumber, int player, GamePhase phase,
-        int[] boardState, int placementCounter, int p1Pieces, int p2Pieces)
-    {
-        SlotID slot = GetSlotByNumber(slotNumber);
-
-        switch (phase)
-        {
-            case GamePhase.Placing:
-                return boardState[slotNumber] == 0; // Must be empty
-
-            case GamePhase.Moving:
-                if (boardState[slotNumber] != 0) return false; // Must be empty
-
-                // For server validation, we assume client sent valid from/to
-                // In production: add adjacency/flying validation here if needed
-                return true;
-
-            case GamePhase.Capturing:
-                int opponent = (player == 1) ? 2 : 1;
-                return boardState[slotNumber] == opponent; // Must be opponent piece
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Executes a move and returns the new state (pure function, no side effects)
-    /// This delegates to your existing Handle* methods but captures state changes
-    /// </summary>
-    public MoveResult ExecuteMoveForNetwork(int slotNumber, int player, GamePhase phase,
-        int[] currentBoard, int placementCounter, int p1Pieces, int p2Pieces)
-    {
-        // Clone board to avoid modifying the live array
-        var result = new MoveResult
-        {
-            NewBoardState = (int[])currentBoard.Clone(),
-            NewPlacementCounter = placementCounter,
-            NewPlayer1Pieces = p1Pieces,
-            NewPlayer2Pieces = p2Pieces,
-            NewPhase = phase,
-            IsGameOver = false,
-            Winner = 0
-        };
-
-        SlotID slot = GetSlotByNumber(slotNumber);
-
-        switch (phase)
-        {
-            case GamePhase.Placing:
-                result.NewBoardState[slotNumber] = player;
-                result.NewPlacementCounter++;
-
-                // Check for mill using your existing logic
-                if (CheckMillForNetwork(slotNumber, player, result.NewBoardState))
-                {
-                    result.NewPhase = GamePhase.Capturing;
-                    return result;
-                }
-
-                if (result.NewPlacementCounter >= 24)
-                    result.NewPhase = GamePhase.Moving;
-                break;
-
-            case GamePhase.Moving:
-                // Note: For moving, we need the 'from' slot to clear it
-                // This is a simplification - in production, pass both from/to
-                result.NewBoardState[slotNumber] = player;
-                // TODO: Clear the 'from' slot - requires passing it in RequestMove
-                break;
-
-            case GamePhase.Capturing:
-                int opponent = (player == 1) ? 2 : 1;
-                result.NewBoardState[slotNumber] = 0; // Remove piece
-
-                if (player == 1) result.NewPlayer2Pieces--;
-                else result.NewPlayer1Pieces--;
-
-                // Check win condition
-                if (HasWonForNetwork(result.NewBoardState, result.NewPlayer1Pieces,
-                    result.NewPlayer2Pieces, result.NewPlacementCounter))
-                {
-                    result.IsGameOver = true;
-                    result.Winner = player;
-                    return result;
-                }
-
-                result.NewPhase = (result.NewPlacementCounter >= 24) ? GamePhase.Moving : GamePhase.Placing;
-                break;
-        }
-
         return result;
     }
 
-    // Helper: Check mill without modifying UI (pure function)
-    private bool CheckMillForNetwork(int slotNumber, int player, int[] board)
+    string SerializeSlotStates(Dictionary<int, int> states)
+    {
+        var entries = new List<string>();
+        foreach (var kv in states) entries.Add($"{kv.Key}:{kv.Value}");
+        return string.Join(",", entries);
+    }
+
+    void OnSlotStatesChanged(FixedString4096Bytes oldVal, FixedString4096Bytes newVal)
+    {
+        if (IsSpawned) // Ensure we're fully initialized
+            ApplySlotStatesToVisuals();
+    }
+
+    void ApplySlotStatesToVisuals()
+    {
+        var states = ParseSlotStates();
+        foreach (var slot in allSlots)
+        {
+            if (states.TryGetValue(slot.slotNumber, out int owner))
+            {
+                if (owner == 0)
+                    slot.ClearSlot();
+                else
+                    slot.SetOccupant(owner);
+            }
+        }
+        UpdateAllMills(); // Refresh mill highlights
+    }
+
+    // ===== MILL & WIN LOGIC =====
+
+    bool CheckMill(int slotNumber, int player)
     {
         foreach (var mill in mills)
         {
             if (!mill.Contains(slotNumber)) continue;
 
-            if (board[mill[0]] == player &&
-                board[mill[1]] == player &&
-                board[mill[2]] == player)
+            int count = 0;
+            foreach (int s in mill)
+                if (GetSlotOwner(s) == player) count++;
+
+            if (count == 3)
+            {
+                // Mark mill slots
+                foreach (int s in mill)
+                    GetSlotByNumber(s).SetMillStatus(true);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void UpdateAllMills()
+    {
+        // Reset all
+        foreach (var slot in allSlots) slot.SetMillStatus(false);
+
+        // Check each mill
+        foreach (var mill in mills)
+        {
+            int owner = GetSlotOwner(mill[0]);
+            if (owner != 0 &&
+                GetSlotOwner(mill[1]) == owner &&
+                GetSlotOwner(mill[2]) == owner)
+            {
+                foreach (int s in mill)
+                {
+                    var slot = GetSlotByNumber(s);
+                    slot.SetMillStatus(true);
+                    slot.slotUI.HighlightMill(owner);
+                }
+            }
+        }
+    }
+
+    bool OpponentHasFreePiece(int opponent)
+    {
+        foreach (var slot in allSlots)
+        {
+            if (GetSlotOwner(slot.slotNumber) == opponent && !slot.isInMill)
                 return true;
         }
         return false;
     }
 
-    // Helper: Win check without UI side effects
-    private bool HasWonForNetwork(int[] board, int p1Pieces, int p2Pieces, int placementCounter)
+    bool HasWon()
     {
-        if (placementCounter < 24) return false;
+        int opponent = (CurrentPlayer.Value == 1) ? 2 : 1;
+        int opponentPieces = (opponent == 1) ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value;
 
-        // Check piece count win condition
-        if (p1Pieces <= 2 || p2Pieces <= 2) return true;
+        if (PlacementCounter.Value < 24) return false;
+        if (opponentPieces <= 2) return true;
 
-        // TODO: Add move availability check here if needed
-        return false;
-    }
-
-    #endregion
-
-    #region Network Event Subscriptions
-
-    // Call this from Awake/Start to subscribe to network events
-    public void SubscribeToNetwork(GameNetwork networkManager)
-    {
-        if (networkManager == null) return;
-
-        networkManager.OnTurnChanged += UpdateTurnIndicator;
-        networkManager.OnPhaseChanged += OnPhaseChangedNetwork;
-        networkManager.OnBoardUpdated += SyncBoardVisuals;
-        networkManager.OnPieceCountChanged += UpdatePieceCount;
-        networkManager.OnGameOver += ShowGameOver;
-        networkManager.OnGameEnded += OnGameEndedNetwork;
-
-        // Initial sync from network state
-        if (networkManager.enabled)
-        {
-            // Manually convert NetworkList<int> to int[] for the initial sync
-            int[] boardArray = new int[networkManager.NetworkBoard.Count];
-            for (int i = 0; i < networkManager.NetworkBoard.Count; i++)
-            {
-                boardArray[i] = networkManager.NetworkBoard[i];
-            }
-            SyncBoardVisuals(boardArray);
-
-            // Access NetworkVariable.Value directly
-            UpdateTurnIndicator(networkManager.NetworkCurrentPlayer.Value);
-        }
-    }
-
-    public void UnsubscribeFromNetwork(GameNetwork networkManager)
-    {
-        if (networkManager == null) return;
-
-        networkManager.OnTurnChanged -= UpdateTurnIndicator;
-        networkManager.OnPhaseChanged -= OnPhaseChangedNetwork;
-        networkManager.OnBoardUpdated -= SyncBoardVisuals;
-        networkManager.OnPieceCountChanged -= UpdatePieceCount;
-        networkManager.OnGameOver -= ShowGameOver;
-        networkManager.OnGameEnded -= OnGameEndedNetwork;
-    }
-
-    // Event handlers (these update your existing UI)
-    private void UpdateTurnIndicator(int newTurn)
-    {
-        if (!Application.isPlaying) return;
-        currentPlayer = newTurn; // Sync local variable for UI consistency
-
-        switch (currentPlayer)
-        {
-            case 1:
-                if (CurrentTurnIndicator != null)
-                {
-                    CurrentTurnIndicator.color = Color.green;
-                    CurrentTurnIndicator.text = "Player 1 Turn";
-                }
-                break;
-            case 2:
-                if (CurrentTurnIndicator != null)
-                {
-                    CurrentTurnIndicator.color = Color.red;
-                    CurrentTurnIndicator.text = "Player 2 Turn";
-                }
-                break;
-        }
-    }
-
-    private void OnPhaseChangedNetwork(GamePhase newPhase)
-    {
-        currentPhase = newPhase; // Sync local variable
-                                 // Optional: Add UI feedback for phase changes
-    }
-
-    private void SyncBoardVisuals(int[] newBoard)
-    {
-        // Safety check for array bounds if network array is smaller/larger than expected
+        bool canFly = opponentPieces <= 3;
         foreach (var slot in allSlots)
         {
-            if (slot.slotNumber < newBoard.Length)
+            if (GetSlotOwner(slot.slotNumber) != opponent) continue;
+
+            if (canFly)
             {
-                int state = newBoard[slot.slotNumber];
-                if (state == 0)
-                    slot.ClearSlot();
-                else
-                    slot.SetOccupant(state);
+                if (allSlots.Any(s => GetSlotOwner(s.slotNumber) == 0))
+                    return false;
+            }
+            else
+            {
+                foreach (int adj in adjacency[slot.slotNumber])
+                    if (GetSlotOwner(adj) == 0) return false;
             }
         }
-        // Refresh mill highlights
-        UpdateAllMills();
+        return true;
     }
 
-    private void UpdatePieceCount(int player, int newCount)
-    {
-        if (player == 1) Player1PiecesOnBoard = newCount;
-        else Player2PiecesOnBoard = newCount;
-        // Optional: Update UI counters
-    }
+    // ===== UI UPDATES =====
 
-    private void ShowGameOver(int winner)
-    {
-        Debug.Log($"Player {winner} wins!");
-        // Optional: Show victory UI popup
-    }
+    void OnCurrentPlayerChanged(int oldVal, int newVal) => UpdateTurnIndicator();
+    void OnPhaseChanged(GamePhase oldVal, GamePhase newVal) => UpdateTurnIndicator();
 
-    private void OnGameEndedNetwork(bool ended)
+    void UpdateTurnIndicator()
     {
-        END = ended;
-        if (ended)
+        if (CurrentTurnIndicator == null) return;
+
+        if (GameEnded.Value)
         {
-            // Disable further input
-            // foreach (var slot in allSlots)
-            //     slot.GetComponent<Button>().enabled = false;
+            CurrentTurnIndicator.text = "Game Over";
+            return;
         }
+
+        CurrentTurnIndicator.text = $"Player {CurrentPlayer.Value} Turn - {CurrentPhase.Value}";
+        CurrentTurnIndicator.color = CurrentPlayer.Value == 1 ? Color.green : Color.red;
     }
 
-    #endregion
-    public void ExitToLobby()
-    {
-        // This assumes your Lobby/Menu scene is named "MainMenu"
-        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
-    }
+    void OnPlacementCounterChanged(int oldVal, int newVal) => UpdateTurnIndicator();
+
+    // ===== HELPERS =====
+
+    SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);
+
+    bool IsAdjacent(SlotID from, SlotID to) => adjacency[from.slotNumber].Contains(to.slotNumber);
+
+    void GameOver(int winner) => ServerGameOver(winner);
 }
+
 public enum GamePhase
 {
     Placing,

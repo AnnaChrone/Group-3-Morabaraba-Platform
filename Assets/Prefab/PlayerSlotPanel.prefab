@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 275568896734402571}
   - component: {fileID: 4941954207806249541}
   - component: {fileID: 532186973645518236}
-  - component: {fileID: 871621308655159223}
+  - component: {fileID: -7935165585369026054}
   m_Layer: 5
   m_Name: PlayerSlotPanel
   m_TagString: Untagged
@@ -77,7 +77,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &871621308655159223
+--- !u!114 &-7935165585369026054
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -86,9 +86,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1952532654486017843}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9be4626e16daefb43aa1d616ca39d7b0, type: 3}
+  m_Script: {fileID: 11500000, guid: 22a3f0896fe555945bedb748b1417bdf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerSlot
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSlots
   playerNameText: {fileID: 1438560317584254899}
 --- !u!1 &8109148329897680087
 GameObject:
@@ -155,7 +155,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Player 1
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

@@ -34,7 +34,54 @@ public class CreateUsername : MonoBehaviour
         // Enable button once ready
         if (signInButton != null) signInButton.interactable = true;
     }
+    public async void OnSignInButtonClicked()
+    {
+        if (isSigningIn) return; // Prevent double-clicks
 
+        string username = userInput.text.Trim();
+
+        // Validate username
+        if (string.IsNullOrEmpty(username))
+        {
+            if (statusText != null) statusText.text = "Please enter a username";
+            return;
+        }
+
+        if (username.Length < 3)
+        {
+            if (statusText != null) statusText.text = "Username must be 3+ characters";
+            return;
+        }
+
+        // Start sign-in process
+        isSigningIn = true;
+        if (signInButton != null) signInButton.interactable = false;
+        if (statusText != null) statusText.text = "Saving...";
+
+        try
+        {
+            // Save username to CloudSave
+            await SaveUsername(username);
+
+            // Optional: Store username in PlayerPrefs for quick local access
+            PlayerPrefs.SetString("PlayerUsername", username);
+            PlayerPrefs.Save();
+
+            Debug.Log($"✅ Username saved: {username}");
+
+            // Load the lobby scene
+            LoadLobbyScene();
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to save username: {e.Message}");
+            if (statusText != null) statusText.text = "Save failed. Try again.";
+
+            // Re-enable button on error
+            isSigningIn = false;
+            if (signInButton != null) signInButton.interactable = true;
+        }
+    }
     async Task InitializeServices()
     {
         try
@@ -48,53 +95,6 @@ public class CreateUsername : MonoBehaviour
         {
             Debug.LogError($"Failed to initialize services: {e.Message}");
             if (statusText != null) statusText.text = "Connection failed";
-        }
-    }
-
-    public async void OnSignInClicked()
-    {
-        if (isSigningIn) return;
-        if (!isInitialized) return;
-
-        string username = userInput.text.Trim();
-
-        if (string.IsNullOrEmpty(username))
-        {
-            if (statusText != null) statusText.text = "Please enter a username";
-            return;
-        }
-
-        isSigningIn = true;
-        if (signInButton != null) signInButton.interactable = false;
-        if (statusText != null) statusText.text = "Signing in...";
-
-        try
-        {
-            await SaveUsername(username);
-
-            // KEY CHANGE: Store in PlayerSession
-            if (PlaySession.Instance != null)
-            {
-                PlaySession.Instance.SetAuthenticated(username);
-            }
-            else
-            {
-                // Fallback if PlayerSession doesn't exist yet
-                PlayerPrefs.SetString("PlayerUsername", username);
-                PlayerPrefs.Save();
-            }
-
-            Debug.Log($"Signed in as: {username}");
-
-            // 🔥 Load the LOBBY scene (not main menu)
-            LoadLobbyScene();
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Sign in failed: {e.Message}");
-            if (statusText != null) statusText.text = "Sign in failed";
-            isSigningIn = false;
-            if (signInButton != null) signInButton.interactable = true;
         }
     }
 
