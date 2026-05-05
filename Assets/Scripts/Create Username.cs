@@ -126,7 +126,7 @@ public class CreateUsername : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
     }
 
-    async Task SaveUsername(string username)
+    async Task SaveUsername(string username) //Create a save username button
     {
         var data = new Dictionary<string, object>
         {
@@ -138,7 +138,7 @@ public class CreateUsername : MonoBehaviour
         Debug.Log("Username saved to CloudSave");
     }
 
-    async Task LoadUsername()
+    async Task LoadUsername() //Move this to the sign in button
     {
         try
         {
@@ -165,4 +165,6 @@ public class CreateUsername : MonoBehaviour
         // If you want to keep this scene loaded too (for persistent managers):
         // SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Additive);
     }
+
+    //Create password
 }

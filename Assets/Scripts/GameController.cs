@@ -457,6 +457,10 @@ public class GameController : NetworkBehaviour
         {
             PlaySoundClientRpc("Lose");
         }
+
+        //Count wins and losses here
+        //Call calculateStats()
+        //Call Save COntroller here
     }
 
     //Audio
@@ -630,6 +634,7 @@ public class GameController : NetworkBehaviour
             }
         }
         return true;
+
     }
 
     // ===== UI UPDATES =====
