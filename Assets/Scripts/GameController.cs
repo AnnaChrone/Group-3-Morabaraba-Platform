@@ -9,15 +9,63 @@ public class GameController : NetworkBehaviour
 {
     // ===== NETWORK VARIABLES (Auto-synced to all clients) =====
 
-    public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(1);
-    public NetworkVariable<int> PlacementCounter = new NetworkVariable<int>(0);
-    public NetworkVariable<int> Player1PiecesOnBoard = new NetworkVariable<int>(12);
-    public NetworkVariable<int> Player2PiecesOnBoard = new NetworkVariable<int>(12);
-    public NetworkVariable<GamePhase> CurrentPhase = new NetworkVariable<GamePhase>(GamePhase.Placing);
-    public NetworkVariable<bool> GameEnded = new NetworkVariable<bool>(false);
+    //public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(1);
+    //public NetworkVariable<int> PlacementCounter = new NetworkVariable<int>(0);
+    //public NetworkVariable<int> Player1PiecesOnBoard = new NetworkVariable<int>(12);
+    //public NetworkVariable<int> Player2PiecesOnBoard = new NetworkVariable<int>(12);
+    //public NetworkVariable<GamePhase> CurrentPhase = new NetworkVariable<GamePhase>(GamePhase.Placing);
+    //public NetworkVariable<bool> GameEnded = new NetworkVariable<bool>(false);
+    //public NetworkVariable<int> SelectedSlot = new NetworkVariable<int>(0);
+    public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(
+    1,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+);
+
+    public NetworkVariable<int> PlacementCounter = new NetworkVariable<int>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<int> Player1PiecesOnBoard = new NetworkVariable<int>(
+        12,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<int> Player2PiecesOnBoard = new NetworkVariable<int>(
+        12,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<GamePhase> CurrentPhase = new NetworkVariable<GamePhase>(
+        GamePhase.Placing,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<bool> GameEnded = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<int> SelectedSlot = new NetworkVariable<int>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     // Track slot ownership: slotNumber -> playerID (0 = empty)
     public NetworkVariable<FixedString4096Bytes> SlotStates = new NetworkVariable<FixedString4096Bytes>("");
+
+    [Header("Loading UI")]
+    public GameObject loadingPanel;
+    public TextMeshProUGUI loadingText;
+
+    private bool networkReady = false;
 
     [Header("UI References")]
     public TextMeshProUGUI CurrentTurnIndicator;
@@ -26,7 +74,7 @@ public class GameController : NetworkBehaviour
     // Local selection (NOT synced - client-side only)
     private SlotID selectedSlot = null;
 
-    // Adjacency and mills data (same for all clients, no need to sync)
+    // Adjacency and mills data
     private readonly Dictionary<int, int[]> adjacency = new Dictionary<int, int[]>()
     {
         {1, new int[] {2, 8, 9}}, {2, new int[] {1,3, 10}}, {3, new int[] {2,4, 11}},
@@ -48,65 +96,95 @@ public class GameController : NetworkBehaviour
         new int[] {5,13,21}, new int[] {6,14,22}, new int[] {7,15,23}, new int[] {8,16,24}
     };
 
-    void Start()
+    void Awake()
     {
-        // 🔥 GameController needs its own spawn call
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        if (loadingPanel != null)
+            loadingPanel.SetActive(true);
+
+        if (loadingText != null)
+            loadingText.text = "Initializing Network...";
+    }
+
+    // ✅ MERGED Update() method - only one now
+    void Update()
+    {
+        if (!IsSpawned || !networkReady) return;
+
+        // Highlight selected slot during moving phase
+        if (CurrentPhase.Value == GamePhase.Moving && SelectedSlot.Value != 0)
         {
-            var networkObject = GetComponent<NetworkObject>();
-            if (networkObject != null && !networkObject.IsSpawned)
+            var slot = GetSlotByNumber(SelectedSlot.Value);
+            if (slot != null)
             {
-                networkObject.Spawn();
-                Debug.Log("✅ GameController NetworkObject spawned");
+                // ✅ Fix: Use visual feedback through SlotID's existing methods
+                // You may need to add a method like SetSelected(bool) to SlotID
+                slot.GetComponent<UnityEngine.UI.Button>().interactable = true;
             }
+        }
+
+        // Optional debug logging at frame 120
+        if (Time.frameCount == 120)
+        {
+            Debug.Log($"[GC] Frame 120 | IsSpawned: {IsSpawned} | networkReady: {networkReady}");
         }
     }
 
     // ===== INITIALIZATION =====
 
-    /*public override void OnNetworkSpawn()
-    {
-        base.OnNetworkSpawn();
-
-        // Register callbacks for NetworkVariable changes
-        CurrentPlayer.OnValueChanged += OnCurrentPlayerChanged;
-        PlacementCounter.OnValueChanged += OnPlacementCounterChanged;
-        CurrentPhase.OnValueChanged += OnPhaseChanged;
-        SlotStates.OnValueChanged += OnSlotStatesChanged;
-
-        // Initialize UI
-        UpdateTurnIndicator();
-
-        // Only host should process input initially; clients wait for state sync
-        InitializeSlotStates();
-    }*/
-
-
+    void OnEnable() => SetButtonsInteractable(false);
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        Debug.Log($"🎮 OnNetworkSpawn called | IsServer: {IsServer} | ClientId: {NetworkManager.Singleton?.LocalClientId}");
+        if (loadingText != null)
+            loadingText.text = "Syncing Game State...";
 
-        // Register NetworkVariable callbacks (all clients)
+        // Register callbacks
         CurrentPlayer.OnValueChanged += OnCurrentPlayerChanged;
         PlacementCounter.OnValueChanged += OnPlacementCounterChanged;
         CurrentPhase.OnValueChanged += OnPhaseChanged;
         SlotStates.OnValueChanged += OnSlotStatesChanged;
 
-        // 🔥 ONLY SERVER initializes the game state
         if (IsServer)
         {
             InitializeGameState();
+            Debug.Log("🎮 Game state initialized");
         }
 
-        // All clients apply current state to visuals
         ApplySlotStatesToVisuals();
         UpdateTurnIndicator();
+
+        StartCoroutine(FinishLoading());
+    }
+
+    System.Collections.IEnumerator FinishLoading()
+    {
+        yield return null;
+        yield return null;
+
+        networkReady = true;
+
+        if (loadingPanel != null)
+        {
+            loadingPanel.SetActive(false);
+            Debug.Log("✅ Loading complete - Game ready!");
+        }
+
+        SetButtonsInteractable(true);
+    }
+
+    void SetButtonsInteractable(bool enabled)
+    {
+        foreach (var slot in allSlots)
+        {
+            var btn = slot.GetComponent<UnityEngine.UI.Button>();
+            if (btn != null) btn.interactable = enabled;
+        }
     }
 
     public override void OnNetworkDespawn()
     {
-        // Unregister callbacks to prevent memory leaks
         CurrentPlayer.OnValueChanged -= OnCurrentPlayerChanged;
         PlacementCounter.OnValueChanged -= OnPlacementCounterChanged;
         CurrentPhase.OnValueChanged -= OnPhaseChanged;
@@ -114,9 +192,16 @@ public class GameController : NetworkBehaviour
         base.OnNetworkDespawn();
     }
 
+    void Start()
+    {
+        Debug.Log($"📍 GameController Start() | IsListening: {NetworkManager.Singleton?.IsListening}");
+        Debug.Log($"GameController IsSpawned: {IsSpawned}");
+        Debug.Log($"NetworkManager active: {NetworkManager.Singleton != null}");
+        Debug.Log($"IsListening: {NetworkManager.Singleton?.IsListening}");
+    }
+
     void InitializeGameState()
     {
-        // Set initial values (server authority)
         CurrentPlayer.Value = 1;
         PlacementCounter.Value = 0;
         Player1PiecesOnBoard.Value = 12;
@@ -124,56 +209,96 @@ public class GameController : NetworkBehaviour
         CurrentPhase.Value = GamePhase.Placing;
         GameEnded.Value = false;
 
-        // Initialize empty slot states: "1:0,2:0,...,24:0"
         var states = new List<string>();
         for (int i = 1; i <= 24; i++) states.Add($"{i}:0");
-        SlotStates.Value = string.Join(",", states); // ✅ string → FixedString implicit
+        SlotStates.Value = string.Join(",", states);
     }
 
     void InitializeSlotStates()
     {
-        // Build initial state string: "1:0,2:0,3:0,...,24:0"
         var states = new List<string>();
         for (int i = 1; i <= 24; i++) states.Add($"{i}:0");
         SlotStates.Value = string.Join(",", states);
         ApplySlotStatesToVisuals();
     }
 
-    // ===== INPUT HANDLING (Client-side, sends RPC to server) =====
+    // ===== INPUT HANDLING =====
 
     public void OnSlotClicked(SlotID slot)
     {
-        if (!IsSpawned)
+        Debug.Log($"🎯 [CLIENT] OnSlotClicked called for Slot {slot.slotNumber}");
+
+        if (!networkReady)
         {
-            Debug.LogWarning("⏳ Game not ready yet. Wait for network sync...");
+            Debug.LogWarning("⏳ Game still loading...");
             return;
         }
 
-        if (GameEnded.Value) return;
-        if (!IsLocalPlayerTurn()) return;
+        if (!IsSpawned)
+        {
+            Debug.LogError("❌ GameController not spawned!");
+            return;
+        }
+
+        if (GameEnded.Value)
+        {
+            Debug.LogWarning("🏁 Game has ended!");
+            return;
+        }
+
+        bool isMyTurn = IsLocalPlayerTurn();
+        Debug.Log($"🎯 [CLIENT] IsLocalPlayerTurn()={isMyTurn}");
+        Debug.Log($"🎯 [CLIENT] CurrentPlayer.Value={CurrentPlayer.Value}");
+        Debug.Log($"🎯 [CLIENT] CurrentPhase.Value={CurrentPhase.Value}");
+
+        if (!isMyTurn)
+        {
+            Debug.LogWarning("⛔ Not your turn!");
+            return;
+        }
+
+        // ✅ Add this log RIGHT before the RPC call
+        Debug.Log($"🚀 [CLIENT] ABOUT TO CALL RPC - Slot={slot.slotNumber}, Phase={CurrentPhase.Value}");
+        Debug.Log($"🚀 [CLIENT] IsServer={IsServer}, IsClient={IsClient}");
 
         RequestMoveServerRpc(slot.slotNumber, CurrentPhase.Value);
+
+        // ✅ Add this log RIGHT after the RPC call
+        Debug.Log($"✅ [CLIENT] RPC CALLED SUCCESSFULLY");
     }
 
     bool IsLocalPlayerTurn()
     {
-        // Determine if this client owns the current player
-        // Assuming: ClientId 0 (Server/Host) = Player 1, others = Player 2
-        int localPlayerId = NetworkManager.Singleton.IsHost ? 1 : 2;
+        if (!NetworkManager.Singleton) return false;
+        int localPlayerId = NetworkManager.Singleton.LocalClientId == 0 ? 1 : 2;
         return CurrentPlayer.Value == localPlayerId;
     }
 
-    [ServerRpc]
-    void RequestMoveServerRpc(int slotNumber, GamePhase phase, ServerRpcParams rpcParams = default)
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestMoveServerRpc(int slotNumber, GamePhase phase, ServerRpcParams rpcParams = default)
     {
-        // Validate: only the player whose turn it is can request moves
-        int requestingPlayer = NetworkManager.Singleton.IsHost ? 1 : 2;
-        if (CurrentPlayer.Value != requestingPlayer) return;
+        Debug.Log($"📡 SERVER RECEIVED RPC from Client {rpcParams.Receive.SenderClientId}");
+
+        ulong senderClientId = rpcParams.Receive.SenderClientId;
+        int requestingPlayer = (senderClientId == 0) ? 1 : 2;
+
+        Debug.Log($"🔍 Validation: CurrentPlayer={CurrentPlayer.Value}, RequestingPlayer={requestingPlayer}");
+
+        if (CurrentPlayer.Value != requestingPlayer)
+        {
+            Debug.LogWarning($"❌ Wrong player! Rejecting request. Current={CurrentPlayer.Value}, Requested={requestingPlayer}");
+            return;
+        }
 
         SlotID slot = GetSlotByNumber(slotNumber);
-        if (slot == null) return;
+        if (slot == null)
+        {
+            Debug.LogError($"❌ Slot {slotNumber} not found!");
+            return;
+        }
 
-        // Process move based on phase
+        Debug.Log($"✅ Processing move for Slot {slotNumber} in Phase {phase}");
+
         switch (phase)
         {
             case GamePhase.Placing:
@@ -185,6 +310,9 @@ public class GameController : NetworkBehaviour
             case GamePhase.Capturing:
                 ServerHandleCapturing(slot);
                 break;
+            default:
+                Debug.LogWarning($"⚠️ Unknown phase: {phase}");
+                break;
         }
     }
 
@@ -192,20 +320,17 @@ public class GameController : NetworkBehaviour
 
     void ServerHandlePlacing(SlotID slot)
     {
-        if (GetSlotOwner(slot.slotNumber) != 0) return; // Already occupied
+        if (GetSlotOwner(slot.slotNumber) != 0) return;
 
-        // Place piece
         SetSlotOwner(slot.slotNumber, CurrentPlayer.Value);
         PlacementCounter.Value++;
 
-        // Check for mill
         if (CheckMill(slot.slotNumber, CurrentPlayer.Value))
         {
             CurrentPhase.Value = GamePhase.Capturing;
-            return; // Wait for capture
+            return;
         }
 
-        // Phase transition
         if (PlacementCounter.Value >= 24)
         {
             CurrentPhase.Value = GamePhase.Moving;
@@ -214,11 +339,51 @@ public class GameController : NetworkBehaviour
         EndTurn();
     }
 
+    // ✅ Fixed: Changed 'toSlot' to 'slot' (the parameter name)
     void ServerHandleMoving(SlotID slot)
     {
-        // This is simplified - you'd need to track selected slot via NetworkVariable
-        // For now, assume client sends both fromSlot and toSlot
-        // See enhanced version below for full implementation
+        int currentPlayer = CurrentPlayer.Value;
+
+        if (SelectedSlot.Value == 0)
+        {
+            if (GetSlotOwner(slot.slotNumber) != currentPlayer)
+                return;
+
+            SelectedSlot.Value = slot.slotNumber;
+            return;
+        }
+
+        SlotID fromSlot = GetSlotByNumber(SelectedSlot.Value);
+        if (!IsValidMove(fromSlot, slot, currentPlayer))
+        {
+            SelectedSlot.Value = 0;
+            return;
+        }
+
+        SetSlotOwner(SelectedSlot.Value, 0);
+        SetSlotOwner(slot.slotNumber, currentPlayer);
+
+        SelectedSlot.Value = 0;
+
+        if (CheckMill(slot.slotNumber, currentPlayer))
+        {
+            CurrentPhase.Value = GamePhase.Capturing;
+            return;
+        }
+
+        EndTurn();
+    }
+
+    bool IsValidMove(SlotID from, SlotID to, int player)
+    {
+        if (GetSlotOwner(to.slotNumber) != 0) return false;
+
+        int piecesOnBoard = (player == 1) ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value;
+
+        if (piecesOnBoard <= 3)
+            return true;
+
+        return IsAdjacent(from, to);
     }
 
     void ServerHandleCapturing(SlotID slot)
@@ -226,11 +391,9 @@ public class GameController : NetworkBehaviour
         int opponent = (CurrentPlayer.Value == 1) ? 2 : 1;
         if (GetSlotOwner(slot.slotNumber) != opponent) return;
 
-        // Mill capture rules
         if (slot.isInMill && OpponentHasFreePiece(opponent))
-            return; // Cannot capture from mill if free pieces exist
+            return;
 
-        // Valid capture
         SetSlotOwner(slot.slotNumber, 0);
 
         if (CurrentPlayer.Value == 1)
@@ -238,14 +401,12 @@ public class GameController : NetworkBehaviour
         else
             Player1PiecesOnBoard.Value--;
 
-        // Check win
         if (HasWon())
         {
             ServerGameOver(CurrentPlayer.Value);
             return;
         }
 
-        // Return to previous phase
         CurrentPhase.Value = (PlacementCounter.Value >= 24) ? GamePhase.Moving : GamePhase.Placing;
         EndTurn();
     }
@@ -265,7 +426,6 @@ public class GameController : NetworkBehaviour
     void GameOverClientRpc(int winner)
     {
         Debug.Log($"🏆 GAME OVER: Player {winner} wins!");
-        // Show victory UI here
     }
 
     // ===== SLOT STATE MANAGEMENT =====
@@ -309,7 +469,7 @@ public class GameController : NetworkBehaviour
 
     void OnSlotStatesChanged(FixedString4096Bytes oldVal, FixedString4096Bytes newVal)
     {
-        if (IsSpawned) // Ensure we're fully initialized
+        if (IsSpawned)
             ApplySlotStatesToVisuals();
     }
 
@@ -326,7 +486,7 @@ public class GameController : NetworkBehaviour
                     slot.SetOccupant(owner);
             }
         }
-        UpdateAllMills(); // Refresh mill highlights
+        UpdateAllMills();
     }
 
     // ===== MILL & WIN LOGIC =====
@@ -343,7 +503,6 @@ public class GameController : NetworkBehaviour
 
             if (count == 3)
             {
-                // Mark mill slots
                 foreach (int s in mill)
                     GetSlotByNumber(s).SetMillStatus(true);
                 return true;
@@ -354,10 +513,8 @@ public class GameController : NetworkBehaviour
 
     void UpdateAllMills()
     {
-        // Reset all
         foreach (var slot in allSlots) slot.SetMillStatus(false);
 
-        // Check each mill
         foreach (var mill in mills)
         {
             int owner = GetSlotOwner(mill[0]);

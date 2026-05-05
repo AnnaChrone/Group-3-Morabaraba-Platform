@@ -10,7 +10,7 @@ public class SlotID : MonoBehaviour
     [Header("State")]
     public int occupiedBy = 0;      // 0 = none, 1 = player1, 2 = player2
     public bool isInMill = false;
-    private Image image;            // cached reference
+    //private Image image;            // cached reference
     public GameController gameController;
 
     // Cleaner check
@@ -21,7 +21,7 @@ public class SlotID : MonoBehaviour
 
     void Awake()
     {
-        image = GetComponent<Image>();
+        //image = GetComponent<Image>();
         slotUI = GetComponent<SlotUI>();
     }
 
@@ -47,7 +47,7 @@ public class SlotID : MonoBehaviour
         occupiedBy = 0;
         isInMill = false;
 
-        image.color = Color.white;
+        //image.color = Color.white;
         slotUI?.ResetColor();
     }
 

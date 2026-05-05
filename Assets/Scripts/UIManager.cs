@@ -65,24 +65,6 @@ public class UIManager : NetworkBehaviour
     private async void Start()
     {
         // Initialize Unity Services
-        /*try
-        {
-            await UnityServices.InitializeAsync();
-
-            // Sign in anonymously (required for Relay)
-            if (!AuthenticationService.Instance.IsSignedIn)
-            {
-                await AuthenticationService.Instance.SignInAnonymouslyAsync();
-            }
-        }
-        catch (RelayServiceException e)
-        {
-            Debug.LogError($"Relay initialization failed: {e.Message}");
-        }
-
-        ShowMainMenu();*/
-
-        // Initialize Unity Services
         try
         {
             await UnityServices.InitializeAsync();

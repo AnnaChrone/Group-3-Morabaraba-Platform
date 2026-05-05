@@ -3652,7 +3652,7 @@ MonoBehaviour:
   GlobalObjectIdHash: 558727344
   InScenePlacedSourceGlobalObjectIdHash: 3967307
   DeferredDespawnTick: 0
-  Ownership: 8
+  Ownership: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
