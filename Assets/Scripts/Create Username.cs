@@ -36,7 +36,8 @@ public class CreateUsername : MonoBehaviour
     }
     public async void OnSignInButtonClicked()
     {
-        if (isSigningIn) return; // Prevent double-clicks
+        // Prevent double-clicks
+        if (isSigningIn) return;
 
         string username = userInput.text.Trim();
 
@@ -53,6 +54,12 @@ public class CreateUsername : MonoBehaviour
             return;
         }
 
+        if (username.Length > 20)
+        {
+            if (statusText != null) statusText.text = "Username must be under 20 characters";
+            return;
+        }
+
         // Start sign-in process
         isSigningIn = true;
         if (signInButton != null) signInButton.interactable = false;
@@ -60,16 +67,31 @@ public class CreateUsername : MonoBehaviour
 
         try
         {
-            // Save username to CloudSave
+            // 1. Save username to CloudSave for cross-device persistence
             await SaveUsername(username);
 
-            // Optional: Store username in PlayerPrefs for quick local access
+            // 2. Save to persistent PlayerData singleton (for current session)
+            if (PlayerData.Instance != null)
+            {
+                PlayerData.Instance.SetUsername(username);
+            }
+            else
+            {
+                // Fallback: create PlayerData if it doesn't exist yet
+                var playerDataObj = new GameObject("PlayerData");
+                DontDestroyOnLoad(playerDataObj);
+                var playerData = playerDataObj.AddComponent<PlayerData>();
+                playerData.SetUsername(username);
+                Debug.LogWarning("PlayerData was not found in scene - created new instance");
+            }
+
+            // 3. Optional: Store in PlayerPrefs for quick local fallback access
             PlayerPrefs.SetString("PlayerUsername", username);
             PlayerPrefs.Save();
 
             Debug.Log($"✅ Username saved: {username}");
 
-            // Load the lobby scene
+            // 4. Load the lobby scene
             LoadLobbyScene();
         }
         catch (System.Exception e)
@@ -77,7 +99,7 @@ public class CreateUsername : MonoBehaviour
             Debug.LogError($"Failed to save username: {e.Message}");
             if (statusText != null) statusText.text = "Save failed. Try again.";
 
-            // Re-enable button on error
+            // Re-enable button on error so user can retry
             isSigningIn = false;
             if (signInButton != null) signInButton.interactable = true;
         }
