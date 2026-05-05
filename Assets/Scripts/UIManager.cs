@@ -123,6 +123,36 @@ public class UIManager : NetworkBehaviour
     }
 
     /// <summary>
+    /// Leaves current lobby/network session and returns to main menu
+    /// </summary>
+    public void LeaveLobbyAndReturnToMainMenu()
+    {
+        // 1. Shutdown NetworkManager if actively listening
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+            Debug.Log("🛑 NetworkManager shutdown");
+        }
+
+        // 2. Reset UnityTransport to clear any Relay server data
+        var transport = NetworkManager.Singleton?.GetComponent<UnityTransport>();
+        if (transport != null)
+        {
+            transport.SetConnectionData("127.0.0.1", 7777); // Reset to default local values
+        }
+
+        // 3. Clear all lobby data
+        ClearLobbyData();
+
+        // 4. Show main menu (don't call LeaveLobbyAndReturnToMainMenu recursively!)
+        mainMenuPanel.SetActive(true);
+        hostingPanel.SetActive(false);
+        joiningPanel.SetActive(false);
+
+        Debug.Log("✅ Returned to main menu");
+    }
+
+    /// <summary>
     /// Hosting
     /// </summary>
 
