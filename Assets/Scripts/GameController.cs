@@ -324,8 +324,8 @@ public class GameController : NetworkBehaviour
 
         SetSlotOwner(slot.slotNumber, CurrentPlayer.Value);
         PlacementCounter.Value++;
-        PlaySoundClientRpc("Move");
-
+        PlaySoundClientRpc("Place");
+        Debug.Log("Playing PLACE AUDIO");
         if (CheckMill(slot.slotNumber, CurrentPlayer.Value))
         {
             CurrentPhase.Value = GamePhase.Capturing;
@@ -345,26 +345,45 @@ public class GameController : NetworkBehaviour
     {
         int currentPlayer = CurrentPlayer.Value;
 
+
         if (SelectedSlot.Value == 0)
         {
             if (GetSlotOwner(slot.slotNumber) != currentPlayer)
                 return;
 
             SelectedSlot.Value = slot.slotNumber;
+            PlaySoundClientRpc("Select");
             return;
         }
 
         SlotID fromSlot = GetSlotByNumber(SelectedSlot.Value);
+
         if (!IsValidMove(fromSlot, slot, currentPlayer))
         {
             SelectedSlot.Value = 0;
+            PlaySoundClientRpc("Invalid");
             return;
         }
+
+
+        bool isFlying =
+            (currentPlayer == 1 ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value) <= 3;
 
         SetSlotOwner(SelectedSlot.Value, 0);
         SetSlotOwner(slot.slotNumber, currentPlayer);
 
+        // Audio
+        if (isFlying)
+        {
+            PlaySoundClientRpc("Fly");
+        }
+        else
+        {
+            PlaySoundClientRpc("Move");
+        }
+
         SelectedSlot.Value = 0;
+
 
         if (CheckMill(slot.slotNumber, currentPlayer))
         {
@@ -402,6 +421,8 @@ public class GameController : NetworkBehaviour
         else
             Player1PiecesOnBoard.Value--;
 
+        PlaySoundClientRpc("Capture");
+        CheckBrokenMills(opponent);
         if (HasWon())
         {
             ServerGameOver(CurrentPlayer.Value);
@@ -428,14 +449,14 @@ public class GameController : NetworkBehaviour
     {
         Debug.Log($"🏆 GAME OVER: Player {winner} wins!");
 
-      /*  if (winner == localPlayerId)
+        if (winner == localPlayerId)
         {
-            AudioController.Instance.PlayAudio("Win");
+            PlaySoundClientRpc("Win");
         }
         else
         {
-            AudioController.Instance.PlayAudio("Lose");
-        }*/
+            PlaySoundClientRpc("Lose");
+        }
     }
 
     //Audio
@@ -522,10 +543,35 @@ public class GameController : NetworkBehaviour
             {
                 foreach (int s in mill)
                     GetSlotByNumber(s).SetMillStatus(true);
+                PlaySoundClientRpc("FormMill");
                 return true;
             }
         }
         return false;
+    }
+
+    void CheckBrokenMills(int player)
+    {
+        foreach (var mill in mills)
+        {
+            bool wasMill = true;
+
+            foreach (int slot in mill)
+            {
+                if (GetSlotOwner(slot) != player)
+                {
+                    wasMill = false;
+                    break;
+                }
+            }
+
+            if (!wasMill)
+            {
+                // If this mill is no longer valid, play break sound
+                PlaySoundClientRpc("BreakMill");
+                return;
+            }
+        }
     }
 
     void UpdateAllMills()
