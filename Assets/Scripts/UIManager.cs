@@ -104,6 +104,40 @@ public class UIManager : NetworkBehaviour
         }
     }
 
+    /// <summary>
+    /// Called when client is disconnected (e.g., host left). 
+    /// Returns client to main menu without shutting down NetworkManager.
+    /// </summary>
+    public void ReturnToMainMenuAsClient()
+    {
+        Debug.Log("🔌 Host disconnected - returning to main menu");
+
+        // Optional: Show message without delay
+        if (errorPanel != null && errorText != null)
+        {
+            errorText.text = "Host left the lobby";
+            errorPanel.SetActive(true);
+            // Hide immediately or next frame if preferred
+            errorPanel.SetActive(false);
+        }
+
+        // Reset UnityTransport
+        var transport = NetworkManager.Singleton?.GetComponent<UnityTransport>();
+        if (transport != null)
+        {
+            transport.SetConnectionData("127.0.0.1", 7777);
+        }
+
+        // Clear lobby data
+        ClearLobbyData();
+
+        // Reset UI
+        mainMenuPanel.SetActive(true);
+        hostingPanel.SetActive(false);
+        joiningPanel.SetActive(false);
+        UpdateJoinButtonState("");
+    }
+
     private new void OnDestroy()
     {
         // Clean up callbacks to avoid memory leaks
@@ -601,16 +635,23 @@ public class UIManager : NetworkBehaviour
 
     void OnClientDisconnected(ulong clientId)
     {
-        if (!IsServer) return;
-
-        Debug.Log($"👋 Client disconnected: {clientId}");
-
-        // Remove last player (simplified approach)
-        if (playersInLobby.Count > 0)
+        // === HOST LOGIC: Update player list ===
+        if (IsServer)
         {
-            playersInLobby.RemoveAt(playersInLobby.Count - 1);
-            string delimited = string.Join("|", playersInLobby);
-            UpdatePlayerListClientRpc(delimited);
+            Debug.Log($"👋 Client disconnected: {clientId}");
+            if (playersInLobby.Count > 0)
+            {
+                playersInLobby.RemoveAt(playersInLobby.Count - 1);
+                string delimited = string.Join("|", playersInLobby);
+                UpdatePlayerListClientRpc(delimited);
+            }
+            return;
+        }
+
+        // === CLIENT LOGIC: Host left ===
+        if (hostingPanel.activeSelf || joiningPanel.activeSelf)
+        {
+            ReturnToMainMenuAsClient();
         }
     }
 }
