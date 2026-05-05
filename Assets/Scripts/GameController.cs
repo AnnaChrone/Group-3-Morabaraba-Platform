@@ -266,11 +266,11 @@ public class GameController : NetworkBehaviour
         // ✅ Add this log RIGHT after the RPC call
         Debug.Log($"✅ [CLIENT] RPC CALLED SUCCESSFULLY");
     }
-
+    int localPlayerId;
     bool IsLocalPlayerTurn()
     {
         if (!NetworkManager.Singleton) return false;
-        int localPlayerId = NetworkManager.Singleton.LocalClientId == 0 ? 1 : 2;
+        localPlayerId = NetworkManager.Singleton.LocalClientId == 0 ? 1 : 2;
         return CurrentPlayer.Value == localPlayerId;
     }
 
@@ -324,6 +324,7 @@ public class GameController : NetworkBehaviour
 
         SetSlotOwner(slot.slotNumber, CurrentPlayer.Value);
         PlacementCounter.Value++;
+        PlaySoundClientRpc("Move");
 
         if (CheckMill(slot.slotNumber, CurrentPlayer.Value))
         {
@@ -426,6 +427,22 @@ public class GameController : NetworkBehaviour
     void GameOverClientRpc(int winner)
     {
         Debug.Log($"🏆 GAME OVER: Player {winner} wins!");
+
+      /*  if (winner == localPlayerId)
+        {
+            AudioController.Instance.PlayAudio("Win");
+        }
+        else
+        {
+            AudioController.Instance.PlayAudio("Lose");
+        }*/
+    }
+
+    //Audio
+    [ClientRpc]
+    void PlaySoundClientRpc(string AudioType)
+    {
+        AudioController.Instance?.PlayAudio(AudioType);
     }
 
     // ===== SLOT STATE MANAGEMENT =====
