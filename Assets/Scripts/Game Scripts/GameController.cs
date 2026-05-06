@@ -92,7 +92,8 @@ public class GameController : NetworkBehaviour
     public TextMeshProUGUI Player2Pieces;
     public TextMeshProUGUI Player2Captures;
 
-
+    //[Header("Player stats")]
+    //public CreateUsername createUsername;
     // Local selection (NOT synced - client-side only)
     private SlotID selectedSlot = null;
 
@@ -505,6 +506,7 @@ public class GameController : NetworkBehaviour
         if (winner == localPlayerId)
         {
             //set game stats and win reason
+            PlayerData.Instance.AddWin();
             WinScreen.SetActive(true);
             PlaySoundClientRpc("Win");
         }

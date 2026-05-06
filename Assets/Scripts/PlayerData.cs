@@ -5,6 +5,7 @@ public class PlayerData : MonoBehaviour
     public static PlayerData Instance { get; private set; }
 
     public string Username { get; private set; } = "Guest";
+    public float wins {get; private set;}
 
     private void Awake()
     {
@@ -37,5 +38,15 @@ public class PlayerData : MonoBehaviour
     public void ClearUsername()
     {
         Username = "Guest";
+    }
+
+    public void setWins(float Wins)
+    {
+        wins = Wins;
+    }
+    public void AddWin()
+    {
+        wins++;
+        Debug.Log("Wins: "+wins);
     }
 }

@@ -44,11 +44,11 @@ public class SaveController : MonoBehaviour
          }
     }
 
-    public void AddWin()
-    {
-        playerWins++;
-        saveGame();
+    // public void AddWin()
+    // {
+    //     playerWins++;
+    //     saveGame();
 
-        Debug.Log("Total wins: "+playerWins);
-    }
+    //     Debug.Log("Total wins: "+playerWins);
+    // }
 }

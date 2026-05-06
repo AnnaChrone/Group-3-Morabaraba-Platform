@@ -7,6 +7,7 @@ using Unity.Services.Authentication;
 using Unity.Services.CloudSave;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Unity.VisualScripting;
 
 public class CreateUsername : MonoBehaviour
 {
@@ -19,8 +20,13 @@ public class CreateUsername : MonoBehaviour
     [Header("Scene Settings")]
     public string lobbySceneName = "Lobby"; // Change to your actual lobby scene name
 
+    [Header("Player Stats")]
+    public float playerWins;
     private bool isInitialized = false;
     private bool isSigningIn = false;
+
+  
+
 
     async void Start()
     {
@@ -75,6 +81,7 @@ public class CreateUsername : MonoBehaviour
             if (PlayerData.Instance != null)
             {
                 PlayerData.Instance.SetUsername(username);
+                PlayerData.Instance.setWins(playerWins);
             }
             else
             {
@@ -132,7 +139,9 @@ public class CreateUsername : MonoBehaviour
         var data = new Dictionary<string, object>
         {
             { "username", username },
+            {"wins", playerWins},
             { "lastLogin", System.DateTime.UtcNow.ToString() }
+            
         };
 
         await CloudSaveService.Instance.Data.ForceSaveAsync(data);
@@ -143,14 +152,25 @@ public class CreateUsername : MonoBehaviour
     {
         try
         {
-            var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username" });
+            var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username", "wins" });
 
             if (data.ContainsKey("username") && !string.IsNullOrEmpty(data["username"].ToString()))
             {
                 string username = data["username"].ToString();
                 userInput.text = username;
-                Debug.Log($"Loaded saved username: {username}");
+                
             }
+
+            if (data.ContainsKey("wins"))
+            {
+                playerWins = float.Parse(data["wins"].ToString());
+            }
+            else
+            {
+                playerWins = 0;
+            }
+
+            Debug.Log($"Loaded: {userInput.text}, Wins: {playerWins}");
         }
         catch (System.Exception e)
         {
@@ -167,5 +187,10 @@ public class CreateUsername : MonoBehaviour
         // SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Additive);
     }
 
-    //Create password
+    public async void AddWin()
+    {
+        playerWins++;
+        await SaveUsername(userInput.text);
+        Debug.Log("Total wins: "+playerWins);
+    }
 }
