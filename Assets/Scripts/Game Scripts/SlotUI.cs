@@ -27,7 +27,6 @@ public class SlotUI : MonoBehaviour
         originalColor = slotImage.color;
     }
 
-    /// <summary> Set the slot color for a player </summary>
     public void SetPlayerColor(int player)
     {
         switch (player)
@@ -61,7 +60,6 @@ public class SlotUI : MonoBehaviour
         }
     }
 
-    /// <summary> Highlight as part of a mill </summary>
     public void HighlightMill(int player)
     {
         switch (player)
@@ -78,7 +76,6 @@ public class SlotUI : MonoBehaviour
         }
     }
 
-    /// <summary> Reset the slot to its original or empty color </summary>
     public void ResetColor()
     {
         slotImage.color = emptyColor;

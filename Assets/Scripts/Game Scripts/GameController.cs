@@ -29,13 +29,13 @@ public class GameController : NetworkBehaviour
     );
 
     public NetworkVariable<int> Player1PiecesOnBoard = new NetworkVariable<int>(
-        12,
+        0,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
     public NetworkVariable<int> Player2PiecesOnBoard = new NetworkVariable<int>(
-        12,
+        0,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
@@ -58,6 +58,12 @@ public class GameController : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    public NetworkVariable<int> Player1CapturesCount = new NetworkVariable<int>(
+    0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    public NetworkVariable<int> Player2CapturesCount = new NetworkVariable<int>(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     // Track slot ownership: slotNumber -> playerID (0 = empty)
     public NetworkVariable<FixedString4096Bytes> SlotStates = new NetworkVariable<FixedString4096Bytes>("");
 
@@ -70,6 +76,22 @@ public class GameController : NetworkBehaviour
     [Header("UI References")]
     public TextMeshProUGUI CurrentTurnIndicator;
     public SlotID[] allSlots;
+
+    [Header("Win and Loss Screens")]
+    public GameObject WinScreen;
+    public TextMeshProUGUI WinReason;
+    public TextMeshProUGUI WinGameStats;
+    public GameObject LossScreen;
+    public TextMeshProUGUI LossReason;
+    public TextMeshProUGUI LossGameStats;
+
+    [Header("Player piece depiction")]
+    public TextMeshProUGUI Player1Pieces;
+    public TextMeshProUGUI Player1Captures;
+
+    public TextMeshProUGUI Player2Pieces;
+    public TextMeshProUGUI Player2Captures;
+
 
     // Local selection (NOT synced - client-side only)
     private SlotID selectedSlot = null;
@@ -145,6 +167,8 @@ public class GameController : NetworkBehaviour
         PlacementCounter.OnValueChanged += OnPlacementCounterChanged;
         CurrentPhase.OnValueChanged += OnPhaseChanged;
         SlotStates.OnValueChanged += OnSlotStatesChanged;
+        Player1CapturesCount.OnValueChanged += OnCaptureChanged;
+        Player2CapturesCount.OnValueChanged += OnCaptureChanged;
 
         if (IsServer)
         {
@@ -157,7 +181,10 @@ public class GameController : NetworkBehaviour
 
         StartCoroutine(FinishLoading());
     }
-
+    void OnCaptureChanged(int oldVal, int newVal)
+    {
+        UpdatePiecesToPlaceUI();
+    }
     System.Collections.IEnumerator FinishLoading()
     {
         yield return null;
@@ -172,6 +199,7 @@ public class GameController : NetworkBehaviour
         }
 
         SetButtonsInteractable(true);
+        UpdatePiecesToPlaceUI();
     }
 
     void SetButtonsInteractable(bool enabled)
@@ -189,6 +217,8 @@ public class GameController : NetworkBehaviour
         PlacementCounter.OnValueChanged -= OnPlacementCounterChanged;
         CurrentPhase.OnValueChanged -= OnPhaseChanged;
         SlotStates.OnValueChanged -= OnSlotStatesChanged;
+        Player1CapturesCount.OnValueChanged -= OnCaptureChanged;
+        Player2CapturesCount.OnValueChanged -= OnCaptureChanged;
         base.OnNetworkDespawn();
     }
 
@@ -204,8 +234,9 @@ public class GameController : NetworkBehaviour
     {
         CurrentPlayer.Value = 1;
         PlacementCounter.Value = 0;
-        Player1PiecesOnBoard.Value = 12;
-        Player2PiecesOnBoard.Value = 12;
+        
+        Player1PiecesOnBoard.Value = 0;
+        Player2PiecesOnBoard.Value = 0;
         CurrentPhase.Value = GamePhase.Placing;
         GameEnded.Value = false;
 
@@ -257,13 +288,12 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-        // ✅ Add this log RIGHT before the RPC call
+
         Debug.Log($"🚀 [CLIENT] ABOUT TO CALL RPC - Slot={slot.slotNumber}, Phase={CurrentPhase.Value}");
         Debug.Log($"🚀 [CLIENT] IsServer={IsServer}, IsClient={IsClient}");
 
         RequestMoveServerRpc(slot.slotNumber, CurrentPhase.Value);
 
-        // ✅ Add this log RIGHT after the RPC call
         Debug.Log($"✅ [CLIENT] RPC CALLED SUCCESSFULLY");
     }
     int localPlayerId;
@@ -317,12 +347,22 @@ public class GameController : NetworkBehaviour
     }
 
     // ===== SERVER-SIDE GAME LOGIC =====
-
     void ServerHandlePlacing(SlotID slot)
     {
         if (GetSlotOwner(slot.slotNumber) != 0) return;
 
         SetSlotOwner(slot.slotNumber, CurrentPlayer.Value);
+        //Change display of current player's pieces left
+        if (CurrentPlayer.Value == 1)
+        {
+            Player1PiecesOnBoard.Value++;
+
+        }
+        else
+        {
+            Player2PiecesOnBoard.Value++;
+
+        }
         PlacementCounter.Value++;
         PlaySoundClientRpc("Place");
         Debug.Log("Playing PLACE AUDIO");
@@ -336,11 +376,10 @@ public class GameController : NetworkBehaviour
         {
             CurrentPhase.Value = GamePhase.Moving;
         }
-
+        UpdatePiecesClientRpc();
         EndTurn();
     }
 
-    // ✅ Fixed: Changed 'toSlot' to 'slot' (the parameter name)
     void ServerHandleMoving(SlotID slot)
     {
         int currentPlayer = CurrentPlayer.Value;
@@ -390,7 +429,7 @@ public class GameController : NetworkBehaviour
             CurrentPhase.Value = GamePhase.Capturing;
             return;
         }
-
+        UpdatePiecesClientRpc();
         EndTurn();
     }
 
@@ -417,9 +456,20 @@ public class GameController : NetworkBehaviour
         SetSlotOwner(slot.slotNumber, 0);
 
         if (CurrentPlayer.Value == 1)
+        {
             Player2PiecesOnBoard.Value--;
+            Player1CapturesCount.Value++;
+
+            UpdateCaptureUIClientRpc(1, Player1CapturesCount.Value);
+        }
         else
+        {
             Player1PiecesOnBoard.Value--;
+            Player2CapturesCount.Value++;
+
+            UpdateCaptureUIClientRpc(2, Player2CapturesCount.Value);
+        }
+       
 
         PlaySoundClientRpc("Capture");
         CheckBrokenMills(opponent);
@@ -430,8 +480,11 @@ public class GameController : NetworkBehaviour
         }
 
         CurrentPhase.Value = (PlacementCounter.Value >= 24) ? GamePhase.Moving : GamePhase.Placing;
+        UpdatePiecesClientRpc();
         EndTurn();
     }
+
+
 
     void EndTurn()
     {
@@ -451,16 +504,51 @@ public class GameController : NetworkBehaviour
 
         if (winner == localPlayerId)
         {
+            //set game stats and win reason
+            WinScreen.SetActive(true);
             PlaySoundClientRpc("Win");
         }
         else
         {
+            //set game stats and loss reason
+            LossScreen.SetActive(true);
             PlaySoundClientRpc("Lose");
         }
 
         //Count wins and losses here
         //Call calculateStats()
         //Call Save COntroller here
+    }
+
+    void UpdatePiecesToPlaceUI()
+    {
+        // Pieces left to place
+        int player1Placed = (PlacementCounter.Value + 1) / 2;
+        int player2Placed = PlacementCounter.Value / 2;
+
+        int player1Left = Mathf.Max(0, 12 - player1Placed);
+        int player2Left = Mathf.Max(0, 12 - player2Placed);
+
+        Player1Pieces.text = new string('●', player1Left);
+        Player2Pieces.text = new string('●', player2Left);
+
+        Player1Captures.text = new string('●', Player1CapturesCount.Value);
+        Player2Captures.text = new string('●', Player2CapturesCount.Value);
+    }
+
+    [ClientRpc]
+    void UpdateCaptureUIClientRpc(int player, int newValue)
+    {
+        if (player == 1)
+            Player1Captures.text = new string('●', newValue);
+        else
+            Player2Captures.text = new string('●', newValue);
+    }
+
+    [ClientRpc]
+    void UpdatePiecesClientRpc()
+    {
+        UpdatePiecesToPlaceUI();
     }
 
     //Audio
@@ -615,7 +703,13 @@ public class GameController : NetworkBehaviour
         int opponentPieces = (opponent == 1) ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value;
 
         if (PlacementCounter.Value < 24) return false;
-        if (opponentPieces <= 2) return true;
+        if (opponentPieces <= 2)
+        {
+            Debug.Log("Opponent has less than 2 pieces left");
+            WinReason.text = "Your opponent has 2 of less pieces left!";
+            LossReason.text = "You have 2 or less pieces left!";
+            return true;
+        }
 
         bool canFly = opponentPieces <= 3;
         foreach (var slot in allSlots)
@@ -633,6 +727,10 @@ public class GameController : NetworkBehaviour
                     if (GetSlotOwner(adj) == 0) return false;
             }
         }
+        //game win reason is no more moves
+        Debug.Log("Your opponent has no more valid moves");
+        WinReason.text = "Your opponent has no more valid moves!";
+        LossReason.text = "You have no more valid moves!";
         return true;
 
     }
@@ -640,7 +738,11 @@ public class GameController : NetworkBehaviour
     // ===== UI UPDATES =====
 
     void OnCurrentPlayerChanged(int oldVal, int newVal) => UpdateTurnIndicator();
-    void OnPhaseChanged(GamePhase oldVal, GamePhase newVal) => UpdateTurnIndicator();
+    void OnPhaseChanged(GamePhase oldVal, GamePhase newVal)
+    {
+        UpdateTurnIndicator();
+        UpdatePiecesToPlaceUI(); // IMPORTANT
+    }
 
     void UpdateTurnIndicator()
     {
@@ -656,7 +758,11 @@ public class GameController : NetworkBehaviour
         CurrentTurnIndicator.color = CurrentPlayer.Value == 1 ? Color.green : Color.red;
     }
 
-    void OnPlacementCounterChanged(int oldVal, int newVal) => UpdateTurnIndicator();
+    void OnPlacementCounterChanged(int oldVal, int newVal)
+    {
+        UpdateTurnIndicator();
+        UpdatePiecesToPlaceUI(); // THIS is what updates clients
+    }
 
     // ===== HELPERS =====
 
