@@ -3,7 +3,6 @@ using UnityEngine;
 public class SaveData 
 {
     //Store Wins/losses
-    //public in Win
-    //public int Loss
-    //public float Percentage win
+    public float wins;
+    public float losses;
 }
