@@ -5,6 +5,7 @@ public class PlayerData : MonoBehaviour
     public static PlayerData Instance { get; private set; }
 
     public string Username { get; private set; } = "Guest";
+    public string Password{get; private set;}
     public float wins {get; private set;}
     public float losses {get; private set;}
 
@@ -39,6 +40,11 @@ public class PlayerData : MonoBehaviour
     public void ClearUsername()
     {
         Username = "Guest";
+    }
+
+    public void SetPassword(string password)
+    {
+        Password = password.Trim();
     }
 
     public void setWins(float Wins)

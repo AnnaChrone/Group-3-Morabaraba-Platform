@@ -8,6 +8,7 @@ using Unity.Services.CloudSave;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
+using Unity.Services.Lobbies.Models;
 
 public class CreateUsername : MonoBehaviour
 {
@@ -49,6 +50,7 @@ public class CreateUsername : MonoBehaviour
         if (isSigningIn) return;
 
         string username = userInput.text.Trim();
+        string password = userPassword.text.Trim();
 
         // Validate username
         if (string.IsNullOrEmpty(username))
@@ -69,18 +71,19 @@ public class CreateUsername : MonoBehaviour
             return;
         }
 
-         isSigningIn = true;
+        isSigningIn = true;
         signInButton.interactable = false;
         statusText.text = "Creating account...";
 
     try
     {
-        await SaveUsername(username);
+        await SaveUsername(username, password);
 
          // 2. Save to persistent PlayerData singleton (for current session)
             if (PlayerData.Instance != null)
             {
                 PlayerData.Instance.SetUsername(username);
+                PlayerData.Instance.SetPassword(password);
                 PlayerData.Instance.setWins(playerWins);
                 PlayerData.Instance.setLoss(playerLosses);
             }
@@ -119,11 +122,18 @@ public class CreateUsername : MonoBehaviour
         if (isSigningIn) return;
 
         string username = userInput.text.Trim();
+        string password = userPassword.text.Trim();
 
         // Validate username
         if (string.IsNullOrEmpty(username))
         {
             if (statusText != null) statusText.text = "Please enter a username";
+            return;
+        }
+
+        if (string.IsNullOrEmpty(password))
+        {
+            if (statusText != null) statusText.text = "Please enter a password";
             return;
         }
 
@@ -136,7 +146,7 @@ public class CreateUsername : MonoBehaviour
 
         try
         {
-             bool success = await LoadUsername(username);
+             bool success = await LoadUsername(username, password);
 
         if (!success)
         {
@@ -147,6 +157,9 @@ public class CreateUsername : MonoBehaviour
         }
 
         PlayerData.Instance.SetUsername(username);
+        PlayerData.Instance.SetPassword(password);
+        PlayerData.Instance.setWins(playerWins);
+        PlayerData.Instance.setLoss(playerLosses);
 
             // 4. Load the lobby scene
             LoadLobbyScene();
@@ -183,11 +196,12 @@ public class CreateUsername : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
     }
 
-    async Task SaveUsername(string username) //Create a save username button, add save password
+    async Task SaveUsername(string username, string password) //Create a save username button, add save password
     {
         var data = new Dictionary<string, object>
         {
             { "username", username },
+            {"password", password},
             {"wins", playerWins},
             {"loss", playerLosses},
             { "lastLogin", System.DateTime.UtcNow.ToString() }
@@ -198,7 +212,7 @@ public class CreateUsername : MonoBehaviour
         Debug.Log("Username saved to CloudSave");
     }
 
-    async Task<bool> LoadUsername(string user) //Move this to the sign in button
+    async Task<bool> LoadUsername(string user, string userPass) //Move this to the sign in button
     {
         
             var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username", "wins","losses" });
@@ -206,13 +220,20 @@ public class CreateUsername : MonoBehaviour
             if (!data.ContainsKey("username") && !string.IsNullOrEmpty(data["username"].ToString()))
             {
                 return false;
-                
             }
 
                 string savedUser = data["username"].ToString();
                 userInput.text = savedUser;
 
-            if (savedUser != user) return false;
+            if (!data.ContainsKey("password") && !string.IsNullOrEmpty(data["password"].ToString()))
+         {
+            return false;
+         }
+
+         string savedPassword = data["password"].ToString();
+
+            if (savedUser != user || savedPassword != userPass) return false;
+            
 
             if (data.ContainsKey("wins"))
             {
