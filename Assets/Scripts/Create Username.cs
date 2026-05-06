@@ -36,7 +36,7 @@ public class CreateUsername : MonoBehaviour
     async void Start()
     {
         // Disable button until services are ready
-        if (signInButton != null) signInButton.interactable = false;
+        //if (signInButton != null) signInButton.interactable = false;
 
         await InitializeServices();
 
@@ -44,7 +44,7 @@ public class CreateUsername : MonoBehaviour
        // await LoadUsername();
 
         // Enable button once ready
-        if (signInButton != null) signInButton.interactable = true;
+        //if (signInButton != null) signInButton.interactable = true;
     }
 
     public async void OnCreateAccount()
@@ -74,7 +74,7 @@ public class CreateUsername : MonoBehaviour
         }
 
         isSigningIn = true;
-        signInButton.interactable = false;
+        //signInButton.interactable = false;
         statusText.text = "Creating account...";
 
     try
@@ -114,7 +114,7 @@ public class CreateUsername : MonoBehaviour
     {
         statusText.text = "Failed to create account";
         isSigningIn = false;
-        signInButton.interactable = true;
+        //signInButton.interactable = true;
     }
 
         Debug.Log("Account created");
@@ -233,15 +233,14 @@ public class CreateUsername : MonoBehaviour
             }
 
             string savedUser = data["username"].ToString();
-            userInput.text = savedUser;
-
+           
             if (!data.ContainsKey("password"))
             {
                 return false;
             }
 
             string savedPassword = data["password"].ToString();
-             userPassword.text = savedPassword;
+            
 
             if (savedUser != user || savedPassword != userPass) return false;
             
