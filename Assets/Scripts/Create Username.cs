@@ -39,7 +39,7 @@ public class CreateUsername : MonoBehaviour
         // Disable button until services are ready
         if (signInButton != null) signInButton.interactable = false;
 
-        await InitializeServices();
+        await UnityServices.InitializeAsync();
 
         // Try to load existing username
        // await LoadUsername();
@@ -80,49 +80,28 @@ public class CreateUsername : MonoBehaviour
 
     try
     {
-        await SaveUsername(username, password);
-
-         // 2. Save to persistent PlayerData singleton (for current session)
-            if (PlayerData.Instance != null)
-            {
-                PlayerData.Instance.SetUsername(username);
-                PlayerData.Instance.SetPassword(password);
-                PlayerData.Instance.setWins(playerWins);
-                PlayerData.Instance.setLoss(playerLosses);
-            }
-            else
-            {
-                // Fallback: create PlayerData if it doesn't exist yet
-                var playerDataObj = new GameObject("PlayerData");
-                DontDestroyOnLoad(playerDataObj);
-                var playerData = playerDataObj.AddComponent<PlayerData>();
-                playerData.SetUsername(username);
-                Debug.LogWarning("PlayerData was not found in scene - created new instance");
-            }
-
-            // 3. Optional: Store in PlayerPrefs for quick local fallback access
-            PlayerPrefs.SetString("PlayerUsername", username);
-            PlayerPrefs.Save();
-
-            Debug.Log($"✅ Username saved: {username}");
-            
-            // 4. Load the lobby scene
-           // LoadLobbyScene();
-         
-        isSigningIn = false;
-        createAccount.interactable = true;  
-
-
-    }
-    catch
-    {
-        statusText.text = "Failed to create account";
-        isSigningIn = false;
-        createAccount.interactable = true;
-    }
+         await AuthenticationService.Instance.SignUpWithUsernamePasswordAsync(username, password);
 
         Debug.Log("Account created");
+        PlayerData.Instance.SetUsername(username);
+
+        await SaveCloudData(); // optional
+
+        LoadLobbyScene();
     }
+    catch (AuthenticationException e)
+    {
+        Debug.LogError(e);
+        statusText.text = "Account creation failed";
+    }
+    finally
+    {
+        isSigningIn = false;
+        signInButton.interactable = true;
+    }
+    }
+
+
     public async void OnSignInButtonClicked()
     {
         // Prevent double-clicks
@@ -151,49 +130,34 @@ public class CreateUsername : MonoBehaviour
         if (signInButton != null) signInButton.interactable = false;
         if (statusText != null) statusText.text = "Signing in...";
 
-        try
-        {
-             bool success = await LoadUsername(username, password);
+         try
+    {
+        await AuthenticationService.Instance.SignInWithUsernamePasswordAsync(username, password);
 
-        if (!success)
-        {
-            statusText.text = "Invalid login";
-            isSigningIn = false;
-            signInButton.interactable = true;
-            return;
-        }
-
-        if (PlayerData.Instance == null)
-        {
-            var obj = new GameObject("PlayerData");
-            DontDestroyOnLoad(obj);
-            obj.AddComponent<PlayerData>();
-        }
-
+        Debug.Log("Signed in as: " + AuthenticationService.Instance.PlayerId);
         PlayerData.Instance.SetUsername(username);
-        PlayerData.Instance.SetPassword(password);
-        PlayerData.Instance.setWins(playerWins);
-        PlayerData.Instance.setLoss(playerLosses);
 
-            // 4. Load the lobby scene
-            LoadLobbyScene();
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"Failed to save username: {e.Message}");
-            if (statusText != null) statusText.text = "Save failed. Try again.";
+        await LoadCloudData(); // load wins/losses
 
-            // Re-enable button on error so user can retry
-            isSigningIn = false;
-            if (signInButton != null) signInButton.interactable = true;
-        }
+        LoadLobbyScene();
+    }
+    catch (AuthenticationException e)
+    {
+        Debug.LogError(e);
+        statusText.text = "Invalid login";
+    }
+    finally
+    {
+        isSigningIn = false;
+        signInButton.interactable = true;
+    }
     }
     async Task InitializeServices()
     {
         try
         {
             await UnityServices.InitializeAsync();
-            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            //await AuthenticationService.Instance.SignInAnonymouslyAsync();
             isInitialized = true;
             Debug.Log("Unity Services initialized and signed in");
         }
@@ -210,12 +174,10 @@ public class CreateUsername : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
     }
 
-    async Task SaveUsername(string username, string password) //Create a save username button, add save password
+    async Task SaveCloudData() //Create a save username button, add save password
     {
         var data = new Dictionary<string, object>
         {
-            { "username", username },
-            {"password", password},
             {"wins", playerWins},
             {"losses", playerLosses},
             { "lastLogin", System.DateTime.UtcNow.ToString() }
@@ -226,50 +188,13 @@ public class CreateUsername : MonoBehaviour
         Debug.Log("Username saved to CloudSave");
     }
 
-    async Task<bool> LoadUsername(string user, string userPass) //Move this to the sign in button
+    async Task LoadCloudData() //Move this to the sign in button
     {
         
-            var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username", "wins","losses","password" });
+        var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "wins", "losses" });
 
-            if (!data.ContainsKey("username") )
-            {
-                return false;
-            }
-
-            string savedUser = data["username"].ToString();
-           
-            if (!data.ContainsKey("password"))
-            {
-                return false;
-            }
-
-            string savedPassword = data["password"].ToString();
-            
-
-            if (savedUser != user || savedPassword != userPass) return false;
-            
-
-            if (data.ContainsKey("wins"))
-            {
-                playerWins = float.Parse(data["wins"].ToString());
-            }
-            else
-            {
-                playerWins = 0;
-            }
-
-            Debug.Log($"Loaded: {userInput.text}, Wins: {playerWins}");
-
-            if (data.ContainsKey("losses"))
-            {
-                playerLosses = float.Parse(data["losses"].ToString());
-            }
-            else
-            {
-                playerLosses = 0;
-            }
-
-            return true;
+        playerWins = data.ContainsKey("wins") ? float.Parse(data["wins"].ToString()) : 0;
+        playerLosses = data.ContainsKey("losses") ? float.Parse(data["losses"].ToString()) : 0;
        
     }
 
