@@ -13,8 +13,10 @@ using Unity.Services.Lobbies.Models;
 public class CreateUsername : MonoBehaviour
 {
     [Header("UI References")]
+    public TMP_InputField userInputCreate;
+    public TMP_InputField userPasswordCreate; //input field for pass word
     public TMP_InputField userInput;
-    public TMP_InputField userPassword; //input field for pass word
+    public TMP_InputField userPassword;
     public Button signInButton;
     public TextMeshProUGUI statusText; // Optional: shows "Signing in..." feedback
     public GameObject signInPanel;
@@ -49,8 +51,8 @@ public class CreateUsername : MonoBehaviour
     {
         if (isSigningIn) return;
 
-        string username = userInput.text.Trim();
-        string password = userPassword.text.Trim();
+        string username = userInputCreate.text.Trim();
+        string password = userPasswordCreate.text.Trim();
 
         // Validate username
         if (string.IsNullOrEmpty(username))
@@ -106,6 +108,7 @@ public class CreateUsername : MonoBehaviour
             // 4. Load the lobby scene
            // LoadLobbyScene();
 
+
     }
     catch
     {
@@ -114,7 +117,7 @@ public class CreateUsername : MonoBehaviour
         signInButton.interactable = true;
     }
 
-
+        Debug.Log("Account created");
     }
     public async void OnSignInButtonClicked()
     {
@@ -154,6 +157,13 @@ public class CreateUsername : MonoBehaviour
             isSigningIn = false;
             signInButton.interactable = true;
             return;
+        }
+
+        if (PlayerData.Instance == null)
+        {
+            var obj = new GameObject("PlayerData");
+            DontDestroyOnLoad(obj);
+            obj.AddComponent<PlayerData>();
         }
 
         PlayerData.Instance.SetUsername(username);
@@ -203,7 +213,7 @@ public class CreateUsername : MonoBehaviour
             { "username", username },
             {"password", password},
             {"wins", playerWins},
-            {"loss", playerLosses},
+            {"losses", playerLosses},
             { "lastLogin", System.DateTime.UtcNow.ToString() }
             
         };
@@ -215,22 +225,23 @@ public class CreateUsername : MonoBehaviour
     async Task<bool> LoadUsername(string user, string userPass) //Move this to the sign in button
     {
         
-            var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username", "wins","losses" });
+            var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username", "wins","losses","password" });
 
-            if (!data.ContainsKey("username") && !string.IsNullOrEmpty(data["username"].ToString()))
+            if (!data.ContainsKey("username") )
             {
                 return false;
             }
 
-                string savedUser = data["username"].ToString();
-                userInput.text = savedUser;
+            string savedUser = data["username"].ToString();
+            userInput.text = savedUser;
 
-            if (!data.ContainsKey("password") && !string.IsNullOrEmpty(data["password"].ToString()))
-         {
-            return false;
-         }
+            if (!data.ContainsKey("password"))
+            {
+                return false;
+            }
 
-         string savedPassword = data["password"].ToString();
+            string savedPassword = data["password"].ToString();
+             userPassword.text = savedPassword;
 
             if (savedUser != user || savedPassword != userPass) return false;
             
