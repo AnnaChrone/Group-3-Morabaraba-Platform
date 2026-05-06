@@ -12,6 +12,7 @@ public class CreateUsername : MonoBehaviour
 {
     [Header("UI References")]
     public TMP_InputField userInput;
+    public TMP_InputField userPassword; //input field for pass word
     public Button signInButton;
     public TextMeshProUGUI statusText; // Optional: shows "Signing in..." feedback
 
@@ -126,7 +127,7 @@ public class CreateUsername : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
     }
 
-    async Task SaveUsername(string username) //Create a save username button
+    async Task SaveUsername(string username) //Create a save username button, add save password
     {
         var data = new Dictionary<string, object>
         {
