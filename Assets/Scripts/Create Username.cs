@@ -16,6 +16,7 @@ public class CreateUsername : MonoBehaviour
     public TMP_InputField userPassword; //input field for pass word
     public Button signInButton;
     public TextMeshProUGUI statusText; // Optional: shows "Signing in..." feedback
+    public GameObject signInPanel;
 
     [Header("Scene Settings")]
     public string lobbySceneName = "Lobby"; // Change to your actual lobby scene name
@@ -37,14 +38,14 @@ public class CreateUsername : MonoBehaviour
         await InitializeServices();
 
         // Try to load existing username
-        await LoadUsername();
+       // await LoadUsername();
 
         // Enable button once ready
         if (signInButton != null) signInButton.interactable = true;
     }
-    public async void OnSignInButtonClicked()
+
+    public async void OnCreateAccount()
     {
-        // Prevent double-clicks
         if (isSigningIn) return;
 
         string username = userInput.text.Trim();
@@ -68,17 +69,15 @@ public class CreateUsername : MonoBehaviour
             return;
         }
 
-        // Start sign-in process
-        isSigningIn = true;
-        if (signInButton != null) signInButton.interactable = false;
-        if (statusText != null) statusText.text = "Saving...";
+         isSigningIn = true;
+        signInButton.interactable = false;
+        statusText.text = "Creating account...";
 
-        try
-        {
-            // 1. Save username to CloudSave for cross-device persistence
-            await SaveUsername(username);
+    try
+    {
+        await SaveUsername(username);
 
-            // 2. Save to persistent PlayerData singleton (for current session)
+         // 2. Save to persistent PlayerData singleton (for current session)
             if (PlayerData.Instance != null)
             {
                 PlayerData.Instance.SetUsername(username);
@@ -100,6 +99,54 @@ public class CreateUsername : MonoBehaviour
             PlayerPrefs.Save();
 
             Debug.Log($"✅ Username saved: {username}");
+            
+            // 4. Load the lobby scene
+           // LoadLobbyScene();
+
+    }
+    catch
+    {
+        statusText.text = "Failed to create account";
+        isSigningIn = false;
+        signInButton.interactable = true;
+    }
+
+
+    }
+    public async void OnSignInButtonClicked()
+    {
+        // Prevent double-clicks
+        if (isSigningIn) return;
+
+        string username = userInput.text.Trim();
+
+        // Validate username
+        if (string.IsNullOrEmpty(username))
+        {
+            if (statusText != null) statusText.text = "Please enter a username";
+            return;
+        }
+
+        
+
+        // Start sign-in process
+        isSigningIn = true;
+        if (signInButton != null) signInButton.interactable = false;
+        if (statusText != null) statusText.text = "Signing in...";
+
+        try
+        {
+             bool success = await LoadUsername(username);
+
+        if (!success)
+        {
+            statusText.text = "Invalid login";
+            isSigningIn = false;
+            signInButton.interactable = true;
+            return;
+        }
+
+        PlayerData.Instance.SetUsername(username);
 
             // 4. Load the lobby scene
             LoadLobbyScene();
@@ -151,18 +198,21 @@ public class CreateUsername : MonoBehaviour
         Debug.Log("Username saved to CloudSave");
     }
 
-    async Task LoadUsername() //Move this to the sign in button
+    async Task<bool> LoadUsername(string user) //Move this to the sign in button
     {
-        try
-        {
+        
             var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username", "wins","losses" });
 
-            if (data.ContainsKey("username") && !string.IsNullOrEmpty(data["username"].ToString()))
+            if (!data.ContainsKey("username") && !string.IsNullOrEmpty(data["username"].ToString()))
             {
-                string username = data["username"].ToString();
-                userInput.text = username;
+                return false;
                 
             }
+
+                string savedUser = data["username"].ToString();
+                userInput.text = savedUser;
+
+            if (savedUser != user) return false;
 
             if (data.ContainsKey("wins"))
             {
@@ -183,11 +233,9 @@ public class CreateUsername : MonoBehaviour
             {
                 playerLosses = 0;
             }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogWarning($"Could not load saved username: {e.Message}");
-        }
+
+            return true;
+       
     }
 
     void ExecuteSceneLoad()
@@ -199,10 +247,14 @@ public class CreateUsername : MonoBehaviour
         // SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Additive);
     }
 
-    public async void AddWin()
+    public void openSignInPanel()
     {
-        playerWins++;
-        await SaveUsername(userInput.text);
-        Debug.Log("Total wins: "+playerWins);
+        signInPanel.SetActive(true);
     }
+
+    public void closeSignInPanel()
+    {
+        signInPanel.SetActive(false);
+    }
+
 }

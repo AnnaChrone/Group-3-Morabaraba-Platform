@@ -2381,7 +2381,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 976069383}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2024831189}
+        m_TargetAssemblyTypeName: CreateUsername, Assembly-CSharp
+        m_MethodName: closeSignInPanel
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &976069383
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3261,7 +3273,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2024831189}
         m_TargetAssemblyTypeName: CreateUsername, Assembly-CSharp
-        m_MethodName: onSaveClick
+        m_MethodName: OnCreateAccount
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -4426,7 +4438,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2024831189}
         m_TargetAssemblyTypeName: CreateUsername, Assembly-CSharp
-        m_MethodName: OnSignInButtonClicked
+        m_MethodName: openSignInPanel
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -4508,8 +4520,10 @@ MonoBehaviour:
   userPassword: {fileID: 0}
   signInButton: {fileID: 1960919420}
   statusText: {fileID: 0}
+  signInPanel: {fileID: 2052367115}
   lobbySceneName: Lobby
   playerWins: 0
+  playerLosses: 0
 --- !u!4 &2024831190
 Transform:
   m_ObjectHideFlags: 0
@@ -4732,7 +4746,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2052367116
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4880,7 +4894,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2130281950}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 2024831189}
+        m_TargetAssemblyTypeName: CreateUsername, Assembly-CSharp
+        m_MethodName: OnSignInButtonClicked
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2130281950
 MonoBehaviour:
   m_ObjectHideFlags: 0
