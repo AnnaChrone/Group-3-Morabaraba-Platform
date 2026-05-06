@@ -22,6 +22,7 @@ public class CreateUsername : MonoBehaviour
 
     [Header("Player Stats")]
     public float playerWins;
+    public float playerLosses;
     private bool isInitialized = false;
     private bool isSigningIn = false;
 
@@ -82,6 +83,7 @@ public class CreateUsername : MonoBehaviour
             {
                 PlayerData.Instance.SetUsername(username);
                 PlayerData.Instance.setWins(playerWins);
+                PlayerData.Instance.setLoss(playerLosses);
             }
             else
             {
@@ -140,6 +142,7 @@ public class CreateUsername : MonoBehaviour
         {
             { "username", username },
             {"wins", playerWins},
+            {"loss", playerLosses},
             { "lastLogin", System.DateTime.UtcNow.ToString() }
             
         };
@@ -152,7 +155,7 @@ public class CreateUsername : MonoBehaviour
     {
         try
         {
-            var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username", "wins" });
+            var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "username", "wins","losses" });
 
             if (data.ContainsKey("username") && !string.IsNullOrEmpty(data["username"].ToString()))
             {
@@ -171,6 +174,15 @@ public class CreateUsername : MonoBehaviour
             }
 
             Debug.Log($"Loaded: {userInput.text}, Wins: {playerWins}");
+
+            if (data.ContainsKey("losses"))
+            {
+                playerLosses = float.Parse(data["losses"].ToString());
+            }
+            else
+            {
+                playerLosses = 0;
+            }
         }
         catch (System.Exception e)
         {

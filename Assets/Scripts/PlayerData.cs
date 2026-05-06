@@ -6,6 +6,7 @@ public class PlayerData : MonoBehaviour
 
     public string Username { get; private set; } = "Guest";
     public float wins {get; private set;}
+    public float losses {get; private set;}
 
     private void Awake()
     {
@@ -48,5 +49,16 @@ public class PlayerData : MonoBehaviour
     {
         wins++;
         Debug.Log("Wins: "+wins);
+    }
+
+    public void setLoss(float lossNum)
+    {
+        losses = lossNum;
+    }
+
+    public void AddLoss()
+    {
+        losses++;
+        Debug.Log("Losses: "+losses);
     }
 }

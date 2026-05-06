@@ -513,6 +513,7 @@ public class GameController : NetworkBehaviour
         else
         {
             //set game stats and loss reason
+            PlayerData.Instance.AddLoss();
             LossScreen.SetActive(true);
             PlaySoundClientRpc("Lose");
         }

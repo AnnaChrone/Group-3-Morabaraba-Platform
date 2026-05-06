@@ -2678,7 +2678,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1260967442
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4505,9 +4505,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   userInput: {fileID: 194410693}
+  userPassword: {fileID: 0}
   signInButton: {fileID: 1960919420}
   statusText: {fileID: 0}
   lobbySceneName: Lobby
+  playerWins: 0
 --- !u!4 &2024831190
 Transform:
   m_ObjectHideFlags: 0
@@ -4730,7 +4732,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2052367116
 RectTransform:
   m_ObjectHideFlags: 0
