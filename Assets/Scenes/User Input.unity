@@ -4795,7 +4795,8 @@ MonoBehaviour:
   userPasswordCreate: {fileID: 2035883890}
   userInput: {fileID: 354681243}
   userPassword: {fileID: 547933345}
-  signInButton: {fileID: 1960919420}
+  createAccount: {fileID: 1584391930}
+  signInButton: {fileID: 2130281949}
   statusText: {fileID: 1882233821}
   signInPanel: {fileID: 2052367115}
   lobbySceneName: Lobby

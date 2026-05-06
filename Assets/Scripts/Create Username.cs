@@ -17,6 +17,7 @@ public class CreateUsername : MonoBehaviour
     public TMP_InputField userPasswordCreate; //input field for pass word
     public TMP_InputField userInput;
     public TMP_InputField userPassword;
+    public Button createAccount;
     public Button signInButton;
     public TextMeshProUGUI statusText; // Optional: shows "Signing in..." feedback
     public GameObject signInPanel;
@@ -36,7 +37,7 @@ public class CreateUsername : MonoBehaviour
     async void Start()
     {
         // Disable button until services are ready
-        //if (signInButton != null) signInButton.interactable = false;
+        if (signInButton != null) signInButton.interactable = false;
 
         await InitializeServices();
 
@@ -44,7 +45,7 @@ public class CreateUsername : MonoBehaviour
        // await LoadUsername();
 
         // Enable button once ready
-        //if (signInButton != null) signInButton.interactable = true;
+        if (signInButton != null) signInButton.interactable = true;
     }
 
     public async void OnCreateAccount()
@@ -74,7 +75,7 @@ public class CreateUsername : MonoBehaviour
         }
 
         isSigningIn = true;
-        //signInButton.interactable = false;
+        createAccount.interactable = false;
         statusText.text = "Creating account...";
 
     try
@@ -107,6 +108,9 @@ public class CreateUsername : MonoBehaviour
             
             // 4. Load the lobby scene
            // LoadLobbyScene();
+         
+        isSigningIn = false;
+        createAccount.interactable = true;  
 
 
     }
@@ -114,7 +118,7 @@ public class CreateUsername : MonoBehaviour
     {
         statusText.text = "Failed to create account";
         isSigningIn = false;
-        //signInButton.interactable = true;
+        createAccount.interactable = true;
     }
 
         Debug.Log("Account created");
