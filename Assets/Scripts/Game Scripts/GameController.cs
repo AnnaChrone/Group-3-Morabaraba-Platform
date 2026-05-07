@@ -763,9 +763,10 @@ public class GameController : NetworkBehaviour
 
     System.Collections.IEnumerator ReturnToLobbyRoutine()
     {
+        UIManager.Instance.NotifyReturnedToLobby();
         yield return UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("GameScene");
 
-        UIManager.Instance.NotifyReturnedToLobby();
+
     }
 
     [ServerRpc(RequireOwnership = false)]
