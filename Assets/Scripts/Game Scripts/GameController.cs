@@ -159,6 +159,7 @@ public class GameController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        localPlayerId = NetworkManager.Singleton.LocalClientId == 0 ? 1 : 2;
         Debug.Log($"🎮 OnNetworkSpawn called | IsServer: {IsServer} | ClientId: {NetworkManager.Singleton?.LocalClientId}");
         if (loadingText != null)
             loadingText.text = "Syncing Game State...";
@@ -476,7 +477,11 @@ public class GameController : NetworkBehaviour
         CheckBrokenMills(opponent);
         if (HasWon())
         {
-            ServerGameOver(CurrentPlayer.Value);
+            ServerGameOver(
+    CurrentPlayer.Value,
+    WinReason.text,
+    LossReason.text
+);
             return;
         }
 
@@ -492,37 +497,39 @@ public class GameController : NetworkBehaviour
         CurrentPlayer.Value = (CurrentPlayer.Value == 1) ? 2 : 1;
     }
 
-    void ServerGameOver(int winner)
+    void ServerGameOver(int winner, string winReason, string lossReason)
     {
         GameEnded.Value = true;
-        GameOverClientRpc(winner);
+
+        GameOverClientRpc(winner, winReason, lossReason);
     }
 
     [ClientRpc]
-    void GameOverClientRpc(int winner)
+    void GameOverClientRpc(int winner, string winReason, string lossReason)
     {
         Debug.Log($"🏆 GAME OVER: Player {winner} wins!");
 
         if (winner == localPlayerId)
         {
-            //set game stats and win reason
             PlayerData.Instance.AddWin();
+
+            WinReason.text = winReason;
+
             WinScreen.SetActive(true);
-            PlaySoundClientRpc("Win");
+
+            AudioController.Instance?.PlayAudio("Win");
         }
         else
         {
-            //set game stats and loss reason
             PlayerData.Instance.AddLoss();
+
+            LossReason.text = lossReason;
+
             LossScreen.SetActive(true);
-            PlaySoundClientRpc("Lose");
+
+            AudioController.Instance?.PlayAudio("Lose");
         }
-
-        //Count wins and losses here
-        //Call calculateStats()
-        //Call Save COntroller here
     }
-
     void UpdatePiecesToPlaceUI()
     {
         // Pieces left to place
@@ -738,6 +745,35 @@ public class GameController : NetworkBehaviour
 
     }
 
+    public void OnForfeit()
+    {
+        if (!IsSpawned || GameEnded.Value)
+            return;
+
+        SubmitForfeitServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void SubmitForfeitServerRpc(ServerRpcParams rpcParams = default)
+    {
+        if (GameEnded.Value)
+            return;
+
+        ulong senderClientId = rpcParams.Receive.SenderClientId;
+
+        int forfeitingPlayer = (senderClientId == 0) ? 1 : 2;
+
+        int winner = (forfeitingPlayer == 1) ? 2 : 1;
+
+        Debug.Log($"🏳️ Player {forfeitingPlayer} forfeited. Player {winner} wins.");
+
+        ServerGameOver(
+            winner,
+            "Your opponent forfeited!",
+            "You forfeited the match!"
+        );
+    }
+
     // ===== UI UPDATES =====
 
     void OnCurrentPlayerChanged(int oldVal, int newVal) => UpdateTurnIndicator();
@@ -773,7 +809,11 @@ public class GameController : NetworkBehaviour
 
     bool IsAdjacent(SlotID from, SlotID to) => adjacency[from.slotNumber].Contains(to.slotNumber);
 
-    void GameOver(int winner) => ServerGameOver(winner);
+    void GameOver(int winner) => ServerGameOver(
+    CurrentPlayer.Value,
+    WinReason.text,
+    LossReason.text
+);
 }
 
 public enum GamePhase

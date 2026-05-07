@@ -369,6 +369,7 @@ public class UIManager : NetworkBehaviour
 
         if (NetworkManager.Singleton.SceneManager != null)
         {
+            //here is where it needs to store if timer or diff morris type was selected
             NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         }
         else
@@ -393,7 +394,7 @@ public class UIManager : NetworkBehaviour
     void OnHostGameTypeChanged(int index)
     {
         if (!isHost) return;
-        string[] options = { "12 Men's Morris", "9 Men's Morris", "6 Men's Morris" };
+        string[] options = { "Morabaraba", "6 Men's Morris" };
         RequestLobbySettingsUpdateServerRpc(options[index], gameTime);
     }
 
