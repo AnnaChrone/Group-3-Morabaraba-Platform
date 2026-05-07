@@ -3891,6 +3891,7 @@ GameObject:
   - component: {fileID: 343618802}
   - component: {fileID: 343618805}
   - component: {fileID: 343618804}
+  - component: {fileID: 343618806}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -8512,6 +8513,18 @@ MonoBehaviour:
   LossSound: {fileID: 8300000, guid: a78fc1ed496eaca45a84ae837a063840, type: 3}
   FlyingSound: {fileID: 8300000, guid: 8ac95b59a203a6540a7f5be748991e9f, type: 3}
   InvalidMoveSound: {fileID: 8300000, guid: 3ded04b81b3539b4bb7b9d0ecf16744f, type: 3}
+--- !u!114 &343618806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 343618799}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a303743dba1cd2440b2aa98b4e483c2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BasicFunctions
 --- !u!1 &366523311
 GameObject:
   m_ObjectHideFlags: 0
@@ -10143,9 +10156,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 343618802}
-        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
-        m_MethodName: onGoToLobby
+      - m_Target: {fileID: 343618806}
+        m_TargetAssemblyTypeName: BasicFunctions, Assembly-CSharp
+        m_MethodName: QuitGame
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -17441,9 +17454,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 343618802}
-        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
-        m_MethodName: onGoToLobby
+      - m_Target: {fileID: 343618806}
+        m_TargetAssemblyTypeName: BasicFunctions, Assembly-CSharp
+        m_MethodName: QuitGame
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
