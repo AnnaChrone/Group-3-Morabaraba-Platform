@@ -3,6 +3,7 @@ using System.Linq;
 using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
+using Unity.Services.CloudSave.Models.Data.Player;
 using UnityEngine;
 
 public class GameController : NetworkBehaviour
@@ -76,6 +77,8 @@ public class GameController : NetworkBehaviour
     [Header("UI References")]
     public TextMeshProUGUI CurrentTurnIndicator;
     public SlotID[] allSlots;
+    public GameObject Rules;
+    private bool open =false;
 
     [Header("Win and Loss Screens")]
     public GameObject WinScreen;
@@ -775,7 +778,11 @@ public class GameController : NetworkBehaviour
     }
 
     // ===== UI UPDATES =====
-
+    public void onRules()
+    {
+        open = !open;
+        Rules.SetActive(open);
+    }
     void OnCurrentPlayerChanged(int oldVal, int newVal) => UpdateTurnIndicator();
     void OnPhaseChanged(GamePhase oldVal, GamePhase newVal)
     {

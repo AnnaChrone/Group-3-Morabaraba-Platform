@@ -54,7 +54,7 @@ public class PlayerData : MonoBehaviour
     public void AddWin()
     {
         wins++;
-        Debug.Log("Wins: "+wins);
+        Debug.Log("Wins for " + Username + ": " + wins);
     }
 
     public void setLoss(float lossNum)
@@ -65,6 +65,6 @@ public class PlayerData : MonoBehaviour
     public void AddLoss()
     {
         losses++;
-        Debug.Log("Losses: "+losses);
+        Debug.Log("Losses for "+ Username + ": " +losses);
     }
 }
