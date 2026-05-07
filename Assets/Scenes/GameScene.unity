@@ -1731,7 +1731,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Undo
+  m_text: Rewind
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8805,7 +8805,9 @@ MonoBehaviour:
   CaptureSound: {fileID: 8300000, guid: a26baa779e2433d40880bac777c70b08, type: 3}
   WinSound: {fileID: 8300000, guid: a5f6a4cd09a0c7046b51eb93fdc34a27, type: 3}
   LossSound: {fileID: 8300000, guid: a78fc1ed496eaca45a84ae837a063840, type: 3}
+  DrawSound: {fileID: 8300000, guid: a99728ca0b618614bbf8709fc0d51183, type: 3}
   FlyingSound: {fileID: 8300000, guid: 8ac95b59a203a6540a7f5be748991e9f, type: 3}
+  RewindSound: {fileID: 8300000, guid: 207f5bc633dfdb940961983f9594b50f, type: 3}
   InvalidMoveSound: {fileID: 8300000, guid: 3ded04b81b3539b4bb7b9d0ecf16744f, type: 3}
 --- !u!114 &343618806
 MonoBehaviour:
@@ -12417,7 +12419,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 64, y: -68}
-  m_SizeDelta: {x: 80, y: 80}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &833321172
 MonoBehaviour:
@@ -12495,8 +12497,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 14dffd36a4c391b42b61013ffeaa4a96, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4

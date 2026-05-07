@@ -649,7 +649,7 @@ public class GameController : NetworkBehaviour
         {
             DrawReason.text = winReason;
             DrawScreen.SetActive(true);
-            // AudioController.Instance?.PlayAudio("Draw"); add draw
+             AudioController.Instance?.PlayAudio("Draw"); 
         }
         else if (winner == localPlayerId)
         {
@@ -1125,7 +1125,7 @@ public class GameController : NetworkBehaviour
 
         Debug.Log($"Player {requestingPlayer} used rewind.");
 
-        // PlaySoundClientRpc("Rewind");
+        PlaySoundClientRpc("Rewind");
     }
 
     //Timer Functions

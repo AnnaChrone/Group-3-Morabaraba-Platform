@@ -14,7 +14,9 @@ public class AudioController : MonoBehaviour
     public AudioClip CaptureSound;
     public AudioClip WinSound;
     public AudioClip LossSound;
+    public AudioClip DrawSound;
     public AudioClip FlyingSound;
+    public AudioClip RewindSound;
     public AudioClip InvalidMoveSound;
 
     void Awake()
@@ -63,6 +65,14 @@ public class AudioController : MonoBehaviour
             case "Loss":
                 UIAudioPlayer.PlayOneShot(LossSound);
                 Debug.Log("Playing LOSS from AudioController");
+                break;
+            case "Draw":
+                UIAudioPlayer.PlayOneShot(DrawSound);
+                Debug.Log("Playing DRAW from AudioController");
+                break;
+            case "Rewind":
+                UIAudioPlayer.PlayOneShot(RewindSound);
+                Debug.Log("Playing REWIND from AudioController");
                 break;
             case "Fly":
                 UIAudioPlayer.PlayOneShot(FlyingSound);
