@@ -81,7 +81,7 @@ public class SlotUI : MonoBehaviour
         slotImage.color = emptyColor;
     }
 
-    /// <summary> Animate a quick flash for feedback </summary>
+
     public void Flash(Color flashColor, float duration = 0.2f)
     {
         StopAllCoroutines();

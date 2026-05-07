@@ -15,7 +15,7 @@ public class PlayerData : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            Debug.Log("✅ PlayerData initialized");
+            Debug.Log(" PlayerData initialized");
         }
         else
         {
@@ -34,7 +34,7 @@ public class PlayerData : MonoBehaviour
             Username = username.Trim();
             if (Username.Length > 20) Username = Username.Substring(0, 20);
         }
-        Debug.Log($"📝 PlayerData.Username set to: '{Username}'");
+        Debug.Log($" PlayerData.Username set to: '{Username}'");
     }
 
     public void ClearUsername()

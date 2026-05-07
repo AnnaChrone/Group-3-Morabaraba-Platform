@@ -8,8 +8,6 @@ using UnityEngine;
 
 public class GameController : NetworkBehaviour
 {
-    // ===== NETWORK VARIABLES (Auto-synced to all clients) =====
-
     //public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(1);
     //public NetworkVariable<int> PlacementCounter = new NetworkVariable<int>(0);
     //public NetworkVariable<int> Player1PiecesOnBoard = new NetworkVariable<int>(12);
@@ -77,6 +75,7 @@ public class GameController : NetworkBehaviour
     [Header("UI References")]
     public TextMeshProUGUI CurrentTurnIndicator;
     public SlotID[] allSlots;
+    public SlotUI[] slotUIs;
     public GameObject Rules;
     private bool open =false;
 
@@ -95,12 +94,9 @@ public class GameController : NetworkBehaviour
     public TextMeshProUGUI Player2Pieces;
     public TextMeshProUGUI Player2Captures;
 
-    //[Header("Player stats")]
-    //public CreateUsername createUsername;
-    // Local selection (NOT synced - client-side only)
     private SlotID selectedSlot = null;
 
-    // Adjacency and mills data
+    // Adjacency and mills data - Morabaraba specific
     private readonly Dictionary<int, int[]> adjacency = new Dictionary<int, int[]>()
     {
         {1, new int[] {2, 8, 9}}, {2, new int[] {1,3, 10}}, {3, new int[] {2,4, 11}},
@@ -130,8 +126,6 @@ public class GameController : NetworkBehaviour
         if (loadingText != null)
             loadingText.text = "Initializing Network...";
     }
-
-    // ✅ MERGED Update() method - only one now
     void Update()
     {
         if (!IsSpawned || !networkReady) return;
@@ -142,8 +136,12 @@ public class GameController : NetworkBehaviour
             var slot = GetSlotByNumber(SelectedSlot.Value);
             if (slot != null)
             {
-                // ✅ Fix: Use visual feedback through SlotID's existing methods
-                // You may need to add a method like SetSelected(bool) to SlotID
+                SlotUI slotUI = slot.GetComponent<SlotUI>();
+                if (slotUI != null)
+                {
+                    slotUI.Highlight(CurrentPlayer.Value);
+                }
+
                 slot.GetComponent<UnityEngine.UI.Button>().interactable = true;
             }
         }
@@ -155,7 +153,7 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    // ===== INITIALIZATION =====
+    //INITIALIZATION
 
     void OnEnable() => SetButtonsInteractable(false);
 
@@ -163,7 +161,7 @@ public class GameController : NetworkBehaviour
     {
         base.OnNetworkSpawn();
         localPlayerId = NetworkManager.Singleton.LocalClientId == 0 ? 1 : 2;
-        Debug.Log($"🎮 OnNetworkSpawn called | IsServer: {IsServer} | ClientId: {NetworkManager.Singleton?.LocalClientId}");
+        Debug.Log($" OnNetworkSpawn called | IsServer: {IsServer} | ClientId: {NetworkManager.Singleton?.LocalClientId}");
         if (loadingText != null)
             loadingText.text = "Syncing Game State...";
 
@@ -178,7 +176,7 @@ public class GameController : NetworkBehaviour
         if (IsServer)
         {
             InitializeGameState();
-            Debug.Log("🎮 Game state initialized");
+            Debug.Log(" Game state initialized");
         }
 
         ApplySlotStatesToVisuals();
@@ -200,7 +198,7 @@ public class GameController : NetworkBehaviour
         if (loadingPanel != null)
         {
             loadingPanel.SetActive(false);
-            Debug.Log("✅ Loading complete - Game ready!");
+            Debug.Log(" Loading complete - Game ready!");
         }
 
         SetButtonsInteractable(true);
@@ -229,7 +227,7 @@ public class GameController : NetworkBehaviour
 
     void Start()
     {
-        Debug.Log($"📍 GameController Start() | IsListening: {NetworkManager.Singleton?.IsListening}");
+        Debug.Log($"GameController Start() | IsListening: {NetworkManager.Singleton?.IsListening}");
         Debug.Log($"GameController IsSpawned: {IsSpawned}");
         Debug.Log($"NetworkManager active: {NetworkManager.Singleton != null}");
         Debug.Log($"IsListening: {NetworkManager.Singleton?.IsListening}");
@@ -258,48 +256,44 @@ public class GameController : NetworkBehaviour
         ApplySlotStatesToVisuals();
     }
 
-    // ===== INPUT HANDLING =====
+    //Input Handling
 
     public void OnSlotClicked(SlotID slot)
     {
-        Debug.Log($"🎯 [CLIENT] OnSlotClicked called for Slot {slot.slotNumber}");
+        Debug.Log($"[CLIENT] OnSlotClicked called for Slot {slot.slotNumber}");
 
         if (!networkReady)
         {
-            Debug.LogWarning("⏳ Game still loading...");
+            Debug.LogWarning("Game still loading...");
             return;
         }
 
         if (!IsSpawned)
         {
-            Debug.LogError("❌ GameController not spawned!");
+            Debug.LogError("GameController not spawned!");
             return;
         }
 
         if (GameEnded.Value)
         {
-            Debug.LogWarning("🏁 Game has ended!");
+            Debug.LogWarning(" Game has ended!");
             return;
         }
 
         bool isMyTurn = IsLocalPlayerTurn();
-        Debug.Log($"🎯 [CLIENT] IsLocalPlayerTurn()={isMyTurn}");
-        Debug.Log($"🎯 [CLIENT] CurrentPlayer.Value={CurrentPlayer.Value}");
-        Debug.Log($"🎯 [CLIENT] CurrentPhase.Value={CurrentPhase.Value}");
+       // Debug.Log($" [CLIENT] IsLocalPlayerTurn()={isMyTurn}");
+       // Debug.Log($" [CLIENT] CurrentPlayer.Value={CurrentPlayer.Value}");
+       // Debug.Log($" [CLIENT] CurrentPhase.Value={CurrentPhase.Value}");
 
         if (!isMyTurn)
         {
-            Debug.LogWarning("⛔ Not your turn!");
+            Debug.LogWarning(" Not your turn!");
             return;
         }
 
-
-        Debug.Log($"🚀 [CLIENT] ABOUT TO CALL RPC - Slot={slot.slotNumber}, Phase={CurrentPhase.Value}");
-        Debug.Log($"🚀 [CLIENT] IsServer={IsServer}, IsClient={IsClient}");
-
         RequestMoveServerRpc(slot.slotNumber, CurrentPhase.Value);
 
-        Debug.Log($"✅ [CLIENT] RPC CALLED SUCCESSFULLY");
+        Debug.Log($" [CLIENT] RPC CALLED SUCCESSFULLY");
     }
     int localPlayerId;
     bool IsLocalPlayerTurn()
@@ -351,7 +345,7 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    // ===== SERVER-SIDE GAME LOGIC =====
+    //Serverside game logic
     void ServerHandlePlacing(SlotID slot)
     {
         if (GetSlotOwner(slot.slotNumber) != 0) return;
@@ -361,12 +355,10 @@ public class GameController : NetworkBehaviour
         if (CurrentPlayer.Value == 1)
         {
             Player1PiecesOnBoard.Value++;
-
         }
         else
         {
             Player2PiecesOnBoard.Value++;
-
         }
         PlacementCounter.Value++;
         PlaySoundClientRpc("Place");
@@ -464,27 +456,20 @@ public class GameController : NetworkBehaviour
         {
             Player2PiecesOnBoard.Value--;
             Player1CapturesCount.Value++;
-
             UpdateCaptureUIClientRpc(1, Player1CapturesCount.Value);
         }
         else
         {
             Player1PiecesOnBoard.Value--;
             Player2CapturesCount.Value++;
-
             UpdateCaptureUIClientRpc(2, Player2CapturesCount.Value);
         }
        
-
         PlaySoundClientRpc("Capture");
         CheckBrokenMills(opponent);
         if (HasWon())
         {
-            ServerGameOver(
-    CurrentPlayer.Value,
-    WinReason.text,
-    LossReason.text
-);
+            ServerGameOver(CurrentPlayer.Value,WinReason.text,LossReason.text);
             return;
         }
 
@@ -492,8 +477,6 @@ public class GameController : NetworkBehaviour
         UpdatePiecesClientRpc();
         EndTurn();
     }
-
-
 
     void EndTurn()
     {
@@ -503,33 +486,26 @@ public class GameController : NetworkBehaviour
     void ServerGameOver(int winner, string winReason, string lossReason)
     {
         GameEnded.Value = true;
-
         GameOverClientRpc(winner, winReason, lossReason);
     }
 
     [ClientRpc]
     void GameOverClientRpc(int winner, string winReason, string lossReason)
     {
-        Debug.Log($"🏆 GAME OVER: Player {winner} wins!");
+        Debug.Log($"GAME OVER: Player {winner} wins!");
 
         if (winner == localPlayerId)
         {
             PlayerData.Instance.AddWin();
-
             WinReason.text = winReason;
-
             WinScreen.SetActive(true);
-
             AudioController.Instance?.PlayAudio("Win");
         }
         else
         {
             PlayerData.Instance.AddLoss();
-
             LossReason.text = lossReason;
-
             LossScreen.SetActive(true);
-
             AudioController.Instance?.PlayAudio("Lose");
         }
     }
@@ -571,7 +547,7 @@ public class GameController : NetworkBehaviour
         AudioController.Instance?.PlayAudio(AudioType);
     }
 
-    // ===== SLOT STATE MANAGEMENT =====
+    //Slot State Management
 
     void SetSlotOwner(int slotNumber, int player)
     {
@@ -632,7 +608,7 @@ public class GameController : NetworkBehaviour
         UpdateAllMills();
     }
 
-    // ===== MILL & WIN LOGIC =====
+    //Mill and Win Logic
 
     bool CheckMill(int slotNumber, int player)
     {
@@ -672,7 +648,6 @@ public class GameController : NetworkBehaviour
 
             if (!wasMill)
             {
-                // If this mill is no longer valid, play break sound
                 PlaySoundClientRpc("BreakMill");
                 return;
             }
@@ -740,12 +715,11 @@ public class GameController : NetworkBehaviour
                     if (GetSlotOwner(adj) == 0) return false;
             }
         }
-        //game win reason is no more moves
+
         Debug.Log("Your opponent has no more valid moves");
         WinReason.text = "Your opponent has no more valid moves!";
         LossReason.text = "You have no more valid moves!";
         return true;
-
     }
 
     public void OnForfeit()
@@ -763,12 +737,10 @@ public class GameController : NetworkBehaviour
             return;
 
         ulong senderClientId = rpcParams.Receive.SenderClientId;
-
         int forfeitingPlayer = (senderClientId == 0) ? 1 : 2;
-
         int winner = (forfeitingPlayer == 1) ? 2 : 1;
 
-        Debug.Log($"🏳️ Player {forfeitingPlayer} forfeited. Player {winner} wins.");
+        Debug.Log($" Player {forfeitingPlayer} forfeited. Player {winner} wins.");
 
         ServerGameOver(
             winner,
@@ -777,17 +749,38 @@ public class GameController : NetworkBehaviour
         );
     }
 
-    // ===== UI UPDATES =====
+    //UI UPDATES
     public void onRules()
     {
         open = !open;
         Rules.SetActive(open);
     }
+
+    public void onGoToLobby()
+    {
+        StartCoroutine(ReturnToLobbyRoutine());
+    }
+
+    System.Collections.IEnumerator ReturnToLobbyRoutine()
+    {
+        yield return UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("GameScene");
+
+        UIManager.Instance.NotifyReturnedToLobby();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void NotifyReturnedToLobbyServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        UIManager.Instance.PlayerReturnedToLobby(clientId);
+    }
+
     void OnCurrentPlayerChanged(int oldVal, int newVal) => UpdateTurnIndicator();
     void OnPhaseChanged(GamePhase oldVal, GamePhase newVal)
     {
         UpdateTurnIndicator();
-        UpdatePiecesToPlaceUI(); // IMPORTANT
+        UpdatePiecesToPlaceUI(); 
     }
 
     void UpdateTurnIndicator()
@@ -807,20 +800,14 @@ public class GameController : NetworkBehaviour
     void OnPlacementCounterChanged(int oldVal, int newVal)
     {
         UpdateTurnIndicator();
-        UpdatePiecesToPlaceUI(); // THIS is what updates clients
+        UpdatePiecesToPlaceUI(); // THis is what updates clients
     }
 
-    // ===== HELPERS =====
-
+    //Helper Functions
     SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);
-
     bool IsAdjacent(SlotID from, SlotID to) => adjacency[from.slotNumber].Contains(to.slotNumber);
 
-    void GameOver(int winner) => ServerGameOver(
-    CurrentPlayer.Value,
-    WinReason.text,
-    LossReason.text
-);
+    void GameOver(int winner) => ServerGameOver(CurrentPlayer.Value,WinReason.text,LossReason.text);
 }
 
 public enum GamePhase

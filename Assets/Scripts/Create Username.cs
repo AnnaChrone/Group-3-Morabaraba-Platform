@@ -202,7 +202,6 @@ public class CreateUsername : MonoBehaviour
     {
         // Load the lobby scene (additive or single)
         SceneManager.LoadScene(lobbySceneName);
-
         // If you want to keep this scene loaded too (for persistent managers):
         // SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Additive);
     }

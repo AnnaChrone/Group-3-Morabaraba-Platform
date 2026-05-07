@@ -43,13 +43,15 @@ public class UIManager : NetworkBehaviour
 
     // Lobby Data
     private string lobbyCode;
-    private string gameType = "12 Men's Morris";
+    private string gameType = "Morabaraba";
     private string gameTime = "10:00";
+    private Dictionary<ulong, PlayerSceneState> playerSceneStates
+    = new Dictionary<ulong, PlayerSceneState>();
 
-    // ✅ INTERNAL: Raw player data with CID tags for networking
+    // INTERNAL: Raw player data with CID tags for networking
     private List<string> playersInLobbyRaw = new List<string>();
 
-    // ✅ DISPLAY: Clean names for UI (generated from raw data)
+    // DISPLAY: Clean names for UI (generated from raw data)
     private List<string> playersInLobbyDisplay = new List<string>();
 
     private bool isHost = false;
@@ -84,7 +86,7 @@ public class UIManager : NetworkBehaviour
             Debug.LogError($"Services initialization failed: {e.Message}");
         }
 
-        // ✅ Spawn NetworkObject if not already spawned
+        //Spawn NetworkObject if not already spawned
         var networkObject = GetComponent<NetworkObject>();
         if (networkObject != null && !networkObject.IsSpawned)
         {
@@ -92,7 +94,7 @@ public class UIManager : NetworkBehaviour
                 (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer))
             {
                 networkObject.Spawn();
-                Debug.Log("✅ UIManager NetworkObject spawned");
+                Debug.Log("UIManager NetworkObject spawned");
             }
         }
 
@@ -111,7 +113,7 @@ public class UIManager : NetworkBehaviour
 
     public void ReturnToMainMenuAsClient()
     {
-        Debug.Log("🔌 Host disconnected - returning to main menu");
+        Debug.Log("Host disconnected - returning to main menu");
 
         if (errorPanel != null && errorText != null)
         {
@@ -156,7 +158,7 @@ public class UIManager : NetworkBehaviour
         if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             NetworkManager.Singleton.Shutdown();
-            Debug.Log("🛑 NetworkManager shutdown");
+            Debug.Log("NetworkManager shutdown");
         }
 
         var transport = NetworkManager.Singleton?.GetComponent<UnityTransport>();
@@ -171,7 +173,7 @@ public class UIManager : NetworkBehaviour
         hostingPanel.SetActive(false);
         joiningPanel.SetActive(false);
 
-        Debug.Log("✅ Returned to main menu");
+        Debug.Log(" Returned to main menu");
     }
 
     public void OnHostButtonClicked()
@@ -208,21 +210,21 @@ public class UIManager : NetworkBehaviour
 
             if (NetworkManager.Singleton.StartHost())
             {
-                Debug.Log("✅ Host listening for connections");
+                Debug.Log(" Host listening for connections");
             }
 
             SetupHostingDropdowns();
 
-            // ✅ FIXED: Use CID:0 convention for host, with proper tagging
+            //Use CID:0 convention for host, with proper tagging
             playersInLobbyRaw.Clear();
             //string myName = PlayerData.Instance?.Username ?? "Guest";
             //playersInLobbyRaw.Add($"{myName}|CID:0"); // Format: "username|CID:xxx"
 
-            string myName = "Guest"; // Default fallback
+            string myName = "Guest";
             if (PlayerData.Instance != null && !string.IsNullOrEmpty(PlayerData.Instance.Username))
             {
                 myName = PlayerData.Instance.Username;
-                Debug.Log($"✅ Using username from PlayerData: {myName}");
+                Debug.Log($" Using username from PlayerData: {myName}");
             }
             else
             {
@@ -238,16 +240,16 @@ public class UIManager : NetworkBehaviour
                 }
             }
 
-            // ✅ Add with proper format
+            //  Add with proper format
             playersInLobbyRaw.Add($"{myName}|CID:0");
-            Debug.Log($"📝 Added to raw list: {playersInLobbyRaw[0]}");
+            Debug.Log($" Added to raw list: {playersInLobbyRaw[0]}");
 
             UpdateDisplayList();
-            Debug.Log($"📝 Display list generated: {string.Join(", ", playersInLobbyDisplay)}");
+            Debug.Log($" Display list generated: {string.Join(", ", playersInLobbyDisplay)}");
 
             UpdateHostingPlayerList();
 
-            Debug.Log($"✅ Lobby created! Join Code: {lobbyCode}");
+            Debug.Log($" Lobby created! Join Code: {lobbyCode}");
         }
         catch (RelayServiceException e)
         {
@@ -319,13 +321,13 @@ public class UIManager : NetworkBehaviour
             joinGameTypeText.text = gameType;
             joinTimeText.text = gameTime;
 
-            // ✅ Don't pre-populate player list - wait for server broadcast
+            //  Don't pre-populate player list - wait for server broadcast
             playersInLobbyRaw.Clear();
             playersInLobbyDisplay.Clear();
             UpdateJoiningPlayerList();
 
             joinButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = "Ready";
-            Debug.Log($"✅ Joined lobby: {lobbyCode}");
+            Debug.Log($" Joined lobby: {lobbyCode}");
 
             StartNetworkConnection();
         }
@@ -359,29 +361,32 @@ public class UIManager : NetworkBehaviour
     public void StartGame()
     {
         if (!isHost) return;
+
         if (playersInLobbyRaw.Count < 2)
         {
             Debug.LogWarning("Wait for at least one player to join!");
             return;
         }
 
-        Debug.Log($"🎮 Starting game with {playersInLobbyRaw.Count} players!");
+        startGameButton.interactable = false;
 
-        if (NetworkManager.Singleton.SceneManager != null)
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
-            //here is where it needs to store if timer or diff morris type was selected
-            NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+            playerSceneStates[clientId] = PlayerSceneState.InGame;
+
+            Debug.Log($"Marked Client {clientId} as InGame");
         }
-        else
-        {
-            Debug.LogError("❌ NetworkSceneManager is null!");
-        }
+
+        NetworkManager.Singleton.SceneManager.LoadScene(
+            "GameScene",
+            LoadSceneMode.Additive
+        );
     }
 
     void SetupHostingDropdowns()
     {
         hostGameTypeDropdown.ClearOptions();
-        hostGameTypeDropdown.AddOptions(new List<string> { "12 Men's Morris", "9 Men's Morris", "6 Men's Morris" });
+        hostGameTypeDropdown.AddOptions(new List<string> { "Morabaraba", "6 Men's Morris" });
         hostGameTypeDropdown.onValueChanged.RemoveAllListeners();
         hostGameTypeDropdown.onValueChanged.AddListener(OnHostGameTypeChanged);
 
@@ -458,7 +463,7 @@ public class UIManager : NetworkBehaviour
         lobbyCode = "";
         relayJoinCode = "";
         gameType = "12 Men's Morris";
-        gameTime = "10:00";
+        gameTime = "5:00";
         playersInLobbyRaw.Clear();
         playersInLobbyDisplay.Clear();
         isHost = false;
@@ -505,7 +510,7 @@ public class UIManager : NetworkBehaviour
         {
             if (NetworkManager.Singleton.StartHost())
             {
-                Debug.Log("🎮 Host started successfully via Relay!");
+                Debug.Log(" Host started successfully via Relay!");
                 // Host already added in InitializeHosting, just broadcast
                 BroadcastPlayerListUpdate();
             }
@@ -516,7 +521,6 @@ public class UIManager : NetworkBehaviour
         }
         else
         {
-            // ✅ FIXED: Uncommented and improved client connection
             if (NetworkManager.Singleton.StartClient())
             {
                 Debug.Log("🎮 Client connected successfully via Relay!");
@@ -532,13 +536,13 @@ public class UIManager : NetworkBehaviour
 
     System.Collections.IEnumerator SendUsernameAfterConnect()
     {
-        // ✅ Wait for NetworkManager to report connected
+        // Wait for NetworkManager to report connected
         yield return new WaitUntil(() =>
             NetworkManager.Singleton != null &&
             NetworkManager.Singleton.IsConnectedClient
         );
 
-        // ✅ Wait for NetworkObjects to sync (critical for RPCs to work)
+        //  Wait for NetworkObjects to sync (critical for RPCs to work)
         float timeout = 5f;
         float elapsed = 0f;
         while (!GetComponent<NetworkObject>().IsSpawned && elapsed < timeout)
@@ -549,11 +553,11 @@ public class UIManager : NetworkBehaviour
 
         if (!GetComponent<NetworkObject>().IsSpawned)
         {
-            Debug.LogError("❌ UIManager NetworkObject not spawned - cannot send username");
+            Debug.LogError("UIManager NetworkObject not spawned - cannot send username");
             yield break;
         }
 
-        // ✅ Get username with fallbacks
+        //  Get username with fallbacks
         string myName = "Guest";
         if (PlayerData.Instance != null && !string.IsNullOrEmpty(PlayerData.Instance.Username))
         {
@@ -566,7 +570,7 @@ public class UIManager : NetworkBehaviour
 
         Debug.Log($"📡 Client sending username: '{myName}' (CID: {NetworkManager.Singleton.LocalClientId})");
 
-        // ✅ Safety check before sending RPC
+        // Safety check before sending RPC
         if (Instance != null)
         {
             SendUsernameServerRpc(NetworkManager.Singleton.LocalClientId, myName);
@@ -595,7 +599,7 @@ public class UIManager : NetworkBehaviour
         {
             if (hostGameTypeDropdown != null)
             {
-                string[] typeOptions = { "12 Men's Morris", "9 Men's Morris", "6 Men's Morris" };
+                string[] typeOptions = { "Morabaraba", "6 Men's Morris" };
                 int index = System.Array.IndexOf(typeOptions, newGameType);
                 if (index >= 0) hostGameTypeDropdown.value = index;
             }
@@ -613,7 +617,7 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    // ✅ FIXED: This RPC now only updates the DISPLAY list, not raw data
+    //  FIXED: This RPC now only updates the DISPLAY list, not raw data
     [ClientRpc]
     void UpdatePlayerListClientRpc(string displayNamesDelimited)
     {
@@ -621,7 +625,7 @@ public class UIManager : NetworkBehaviour
             ? new List<string>()
             : new List<string>(displayNamesDelimited.Split('|'));
 
-        // ✅ Only update display list - raw data stays on server
+        //  Only update display list - raw data stays on server
         playersInLobbyDisplay = displayNames;
 
         if (isHost)
@@ -641,29 +645,30 @@ public class UIManager : NetworkBehaviour
     void OnClientConnected(ulong clientId)
     {
         if (!IsServer) return;
-        Debug.Log($"🎉 Client connected: {clientId}");
 
-        // Skip host (CID:0) - already in list
+        Debug.Log($"Client connected: {clientId}");
+
+        playerSceneStates[clientId] = PlayerSceneState.InLobby;
+
+        Debug.Log($"Added Client {clientId} to scene tracker");
+
         if (clientId == 0) return;
 
-        // ✅ Add placeholder - username will be sent via a different mechanism
         playersInLobbyRaw.Add($"Player|CID:{clientId}");
 
         UpdateDisplayList();
         UpdateHostingPlayerList();
         BroadcastPlayerListUpdate();
-
-        // ✅ Request username from client (alternative approach)
-        // You could use a ClientRpc to ask for it, or use a different sync method
     }
 
     void OnClientDisconnected(ulong clientId)
     {
+
         if (IsServer)
         {
-            Debug.Log($"👋 Client disconnected: {clientId}");
+            Debug.Log($" Client disconnected: {clientId}");
 
-            // ✅ Remove by matching CID in raw list
+
             playersInLobbyRaw.RemoveAll(p => p.Contains($"|CID:{clientId}"));
 
             UpdateDisplayList();
@@ -683,28 +688,28 @@ public class UIManager : NetworkBehaviour
         string cleanName = string.IsNullOrEmpty(username) ? "Guest" : username.Trim();
         if (cleanName.Length > 20) cleanName = cleanName.Substring(0, 20);
 
-        Debug.Log($"📡 Received username RPC: clientId={clientId}, name='{cleanName}'");
+        Debug.Log($" Received username RPC: clientId={clientId}, name='{cleanName}'");
 
-        // ✅ Find entry by CID in RAW list
+        //  Find entry by CID in RAW list
         int playerIndex = playersInLobbyRaw.FindIndex(p => p.Contains($"|CID:{clientId}"));
 
         if (playerIndex >= 0)
         {
             playersInLobbyRaw[playerIndex] = $"{cleanName}|CID:{clientId}";
-            Debug.Log($"✅ Updated existing entry: {playersInLobbyRaw[playerIndex]}");
+            Debug.Log($" Updated existing entry: {playersInLobbyRaw[playerIndex]}");
         }
         else
         {
-            // ✅ Add new entry - but ONLY if it's not the host (CID:0)
+            //  Add new entry - but ONLY if it's not the host (CID:0)
             if (clientId == 0)
             {
-                Debug.LogWarning("⚠️ Host username update received but no CID:0 entry found - re-adding");
+                Debug.LogWarning(" Host username update received but no CID:0 entry found - re-adding");
                 playersInLobbyRaw.Insert(0, $"{cleanName}|CID:0");
             }
             else
             {
                 playersInLobbyRaw.Add($"{cleanName}|CID:{clientId}");
-                Debug.Log($"✅ Added new entry: {cleanName}|CID:{clientId}");
+                Debug.Log($" Added new entry: {cleanName}|CID:{clientId}");
             }
         }
 
@@ -712,7 +717,7 @@ public class UIManager : NetworkBehaviour
         BroadcastPlayerListUpdate();
     }
 
-    // ✅ Generate display list from raw data - host always first
+    //  Generate display list from raw data - host always first
     void UpdateDisplayList()
     {
         playersInLobbyDisplay.Clear();
@@ -724,34 +729,33 @@ public class UIManager : NetworkBehaviour
         {
             if (string.IsNullOrEmpty(raw)) continue;
 
-            // ✅ More robust parsing with error handling
+            //  More robust parsing with error handling
             int cidIndex = raw.LastIndexOf("|CID:");
             if (cidIndex > 0)
             {
                 string name = raw.Substring(0, cidIndex);
-                string cidPart = raw.Substring(cidIndex + 5); // Skip "|CID:"
+                string cidPart = raw.Substring(cidIndex + 5); 
 
                 if (ulong.TryParse(cidPart, out ulong cid))
                 {
                     // Sanitize name
                     if (string.IsNullOrEmpty(name)) name = "Guest";
                     parsed.Add((name, cid));
-                    Debug.Log($"🔍 Parsed: '{raw}' → name='{name}', cid={cid}");
+                    Debug.Log($" Parsed: '{raw}' → name='{name}', cid={cid}");
                 }
                 else
                 {
-                    Debug.LogWarning($"⚠️ Failed to parse CID from: {raw}");
+                    Debug.LogWarning($" Failed to parse CID from: {raw}");
                 }
             }
             else
             {
                 // ✅ Fallback: treat entire string as name, assign dummy CID
-                Debug.LogWarning($"⚠️ No CID tag found in: '{raw}' - treating as name only");
+                Debug.LogWarning($" No CID tag found in: '{raw}' - treating as name only");
                 parsed.Add((string.IsNullOrEmpty(raw) ? "Guest" : raw, 999));
             }
         }
 
-        // 🔥 Host (CID:0) always first
         var host = parsed.FirstOrDefault(p => p.cid == 0);
         var others = parsed.Where(p => p.cid != 0).ToList();
 
@@ -760,7 +764,7 @@ public class UIManager : NetworkBehaviour
         {
             string label = IsServer ? "(You)" : "(Host)";
             playersInLobbyDisplay.Add($"{host.name} {label}".Trim());
-            Debug.Log($"🎯 Host added to display: {host.name} {label}");
+            Debug.Log($" Host added to display: {host.name} {label}");
         }
         else if (parsed.Count > 0)
         {
@@ -768,7 +772,7 @@ public class UIManager : NetworkBehaviour
             var first = parsed[0];
             string label = IsServer ? "(You)" : "(Host)";
             playersInLobbyDisplay.Add($"{first.name} {label}".Trim());
-            Debug.LogWarning($"⚠️ No CID:0 host found, using first entry: {first.name}");
+            Debug.LogWarning($" No CID:0 host found, using first entry: {first.name}");
         }
 
         // Add others with "(You)" for local client
@@ -780,10 +784,10 @@ public class UIManager : NetworkBehaviour
             playersInLobbyDisplay.Add($"{p.name}{label}".Trim());
         }
 
-        Debug.Log($"📊 Final display list: [{string.Join("], [", playersInLobbyDisplay)}]");
+        Debug.Log($" Final display list: [{string.Join("], [", playersInLobbyDisplay)}]");
     }
 
-    // ✅ Server-only: Broadcast display list to all clients
+    // Server-only: Broadcast display list to all clients
     void BroadcastPlayerListUpdate()
     {
         if (!IsServer) return; // Safety check
@@ -791,4 +795,54 @@ public class UIManager : NetworkBehaviour
         string delimited = string.Join("|", playersInLobbyDisplay);
         UpdatePlayerListClientRpc(delimited);
     }
+
+    public void PlayerReturnedToLobby(ulong clientId)
+    {
+        if (!IsServer) return;
+
+        playerSceneStates[clientId] = PlayerSceneState.InLobby;
+
+        Debug.Log($"Client {clientId} returned to lobby");
+
+        CheckAllPlayersReturned();
+    }
+
+    void CheckAllPlayersReturned()
+    {
+        Debug.Log("===== PLAYER STATES =====");
+
+        foreach (var kvp in playerSceneStates)
+        {
+            Debug.Log($"Client {kvp.Key} = {kvp.Value}");
+        }
+
+        bool everyoneBack = playerSceneStates.Values
+            .All(state => state == PlayerSceneState.InLobby);
+
+        Debug.Log($"Everyone Back? {everyoneBack}");
+
+        if (everyoneBack)
+        {
+            Debug.Log("Everyone returned to lobby");
+
+            startGameButton.interactable = true;
+        }
+    }
+
+    public void NotifyReturnedToLobby()
+    {
+        NotifyReturnedToLobbyServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void NotifyReturnedToLobbyServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        Debug.Log($"Client {clientId} returned to lobby");
+
+        PlayerReturnedToLobby(clientId);
+    }
 }
+
+public enum PlayerSceneState { InLobby, LoadingGame, InGame, ReturningToLobby }
