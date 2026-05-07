@@ -1295,8 +1295,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 51}
-  m_SizeDelta: {x: 600, y: 50}
+  m_AnchoredPosition: {x: 0, y: 33.436035}
+  m_SizeDelta: {x: 600, y: 85.1279}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &118569425
 MonoBehaviour:
@@ -4201,6 +4201,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   ShowTopMostFoldoutHeaderGroup: 1
+  TotalGameTime:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   CurrentPlayer:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
@@ -10448,7 +10453,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 343618806}
         m_TargetAssemblyTypeName: BasicFunctions, Assembly-CSharp
-        m_MethodName: QuitGame
+        m_MethodName: onClose
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -17307,7 +17312,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 343618806}
         m_TargetAssemblyTypeName: BasicFunctions, Assembly-CSharp
-        m_MethodName: QuitGame
+        m_MethodName: onClose
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -18911,7 +18916,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 343618806}
         m_TargetAssemblyTypeName: BasicFunctions, Assembly-CSharp
-        m_MethodName: QuitGame
+        m_MethodName: onClose
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

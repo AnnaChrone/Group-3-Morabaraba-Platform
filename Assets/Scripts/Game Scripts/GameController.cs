@@ -27,6 +27,12 @@ public class GameSnapshot //This allows for the rewind function to work
 }
 public class GameController : NetworkBehaviour
 {
+    public NetworkVariable<float> TotalGameTime = new NetworkVariable<float>(
+    0,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+);
+
     public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(
     1,
     NetworkVariableReadPermission.Everyone,
@@ -146,7 +152,10 @@ public class GameController : NetworkBehaviour
     private bool timerRunning = false;
 
     private SlotID selectedSlot = null;
-    
+
+    [Header("Stats tracking")]
+    private float gameStartTime;
+
     //rewind functionality
     private List<GameSnapshot> gameHistory = new List<GameSnapshot>();
 
@@ -274,6 +283,7 @@ public class GameController : NetworkBehaviour
         Player2CapturesCount.OnValueChanged += OnCaptureChanged;
         Player1Rewinds.OnValueChanged += OnRewindChanged;
         Player2Rewinds.OnValueChanged += OnRewindChanged;
+        TotalGameTime.OnValueChanged += OnTotalGameTimeChanged;
 
         if (IsServer)
         {
@@ -286,6 +296,11 @@ public class GameController : NetworkBehaviour
         UpdateTurnIndicator();
 
         StartCoroutine(FinishLoading());
+    }
+
+    void OnTotalGameTimeChanged(float oldVal, float newVal)
+    {
+        // Optional: Update UI if needed
     }
 
 
@@ -330,6 +345,7 @@ public class GameController : NetworkBehaviour
         Player2CapturesCount.OnValueChanged -= OnCaptureChanged;
         Player1Rewinds.OnValueChanged -= OnRewindChanged;
         Player2Rewinds.OnValueChanged -= OnRewindChanged;
+        TotalGameTime.OnValueChanged -= OnTotalGameTimeChanged;
         base.OnNetworkDespawn();
     }
 
@@ -345,11 +361,15 @@ public class GameController : NetworkBehaviour
     {
         CurrentPlayer.Value = 1;
         PlacementCounter.Value = 0;
-        
+
         Player1PiecesOnBoard.Value = 0;
         Player2PiecesOnBoard.Value = 0;
         CurrentPhase.Value = GamePhase.Placing;
         GameEnded.Value = false;
+
+        // Initialize stats tracking
+        gameStartTime = Time.time;
+        TotalGameTime.Value = 0;
 
         var states = new List<string>();
         for (int i = 1; i <= 24; i++) states.Add($"{i}:0");
@@ -601,33 +621,62 @@ public class GameController : NetworkBehaviour
 
     void ServerGameOver(int winner, string winReason, string lossReason)
     {
+        if (GameEnded.Value) return;
+
         GameEnded.Value = true;
-        GameOverClientRpc(winner, winReason, lossReason);
+
+        // Calculate total time taken (same for both players)
+        float totalGameTime = Time.time - gameStartTime;
+        TotalGameTime.Value = totalGameTime;
+
+        Debug.Log($"Game Over - Total Time: {FormatTime(totalGameTime)}, P1 Captures: {Player1CapturesCount.Value}, P2 Captures: {Player2CapturesCount.Value}");
+
+        GameOverClientRpc(winner, winReason, lossReason,
+                         TotalGameTime.Value,
+                         Player1CapturesCount.Value, Player2CapturesCount.Value);
     }
 
     [ClientRpc]
-    void GameOverClientRpc(int winner, string winReason, string lossReason)
+    void GameOverClientRpc(int winner, string winReason, string lossReason,
+                       float totalGameTime,
+                       int player1Caps, int player2Caps)
     {
         Debug.Log($"GAME OVER: Player {winner} wins!");
+        Debug.Log($"Total Game Time: {FormatTime(totalGameTime)}, P1 Caps: {player1Caps}, P2 Caps: {player2Caps}");
         UpdateRewindUI();
 
         if (winner == 0)
         {
             DrawReason.text = winReason;
             DrawScreen.SetActive(true);
-           // AudioController.Instance?.PlayAudio("Draw"); add draw
+            // AudioController.Instance?.PlayAudio("Draw"); add draw
         }
         else if (winner == localPlayerId)
         {
-            PlayerData.Instance.AddWin();
+            if (PlayerData.Instance != null)
+                PlayerData.Instance.AddWin();
+
             WinReason.text = winReason;
+
+            string timeTaken = FormatTime(totalGameTime);
+            string piecesCaptured = (localPlayerId == 1 ? player1Caps : player2Caps).ToString();
+            WinGameStats.text = $"Time taken: {timeTaken}\nPieces captured: {piecesCaptured}";
+
             WinScreen.SetActive(true);
             AudioController.Instance?.PlayAudio("Win");
         }
         else
         {
-            PlayerData.Instance.AddLoss();
+            if (PlayerData.Instance != null)
+                PlayerData.Instance.AddLoss();
+
             LossReason.text = lossReason;
+
+            // Format the stats string - same time for both, just different captures
+            string timeTaken = FormatTime(totalGameTime);
+            string piecesCaptured = (localPlayerId == 1 ? player1Caps : player2Caps).ToString();
+            LossGameStats.text = $"Time taken: {timeTaken}\nPieces captured: {piecesCaptured}";
+
             LossScreen.SetActive(true);
             AudioController.Instance?.PlayAudio("Lose");
         }
