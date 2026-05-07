@@ -214,11 +214,7 @@ public class UIManager : NetworkBehaviour
             }
 
             SetupHostingDropdowns();
-
-            //Use CID:0 convention for host, with proper tagging
             playersInLobbyRaw.Clear();
-            //string myName = PlayerData.Instance?.Username ?? "Guest";
-            //playersInLobbyRaw.Add($"{myName}|CID:0"); // Format: "username|CID:xxx"
 
             string myName = "Guest";
             if (PlayerData.Instance != null && !string.IsNullOrEmpty(PlayerData.Instance.Username))
@@ -232,11 +228,11 @@ public class UIManager : NetworkBehaviour
                 if (PlayerPrefs.HasKey("PlayerUsername"))
                 {
                     myName = PlayerPrefs.GetString("PlayerUsername");
-                    Debug.Log($"⚠️ PlayerData missing, using PlayerPrefs fallback: {myName}");
+                    Debug.Log($"PlayerData missing, using PlayerPrefs fallback: {myName}");
                 }
                 else
                 {
-                    Debug.LogWarning("⚠️ No username found anywhere - using default 'Guest'");
+                    Debug.LogWarning("No username found anywhere - using default 'Guest'");
                 }
             }
 
@@ -249,7 +245,6 @@ public class UIManager : NetworkBehaviour
 
             UpdateHostingPlayerList();
 
-            Debug.Log($" Lobby created! Join Code: {lobbyCode}");
         }
         catch (RelayServiceException e)
         {
@@ -370,28 +365,47 @@ public class UIManager : NetworkBehaviour
 
         startGameButton.interactable = false;
 
+        // Log current settings before starting game
+        Debug.Log($"=== STARTING GAME WITH SETTINGS ===");
+        Debug.Log($"GameType: {GameSettings.GameType}");
+        Debug.Log($"GameTime: {GameSettings.GameTime}");
+
         foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
             playerSceneStates[clientId] = PlayerSceneState.InGame;
-
             Debug.Log($"Marked Client {clientId} as InGame");
         }
 
-        NetworkManager.Singleton.SceneManager.LoadScene(
-            "GameScene",
-            LoadSceneMode.Additive
-        );
+        // Load the appropriate scene based on game type
+        if (GameSettings.GameType == "6 Men's Morris")
+        {
+            NetworkManager.Singleton.SceneManager.LoadScene("SixMensMorris", LoadSceneMode.Additive);
+        }
+        else
+        {
+            NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Additive);
+        }
     }
 
     void SetupHostingDropdowns()
     {
+        // Game Type Dropdown
         hostGameTypeDropdown.ClearOptions();
         hostGameTypeDropdown.AddOptions(new List<string> { "Morabaraba", "6 Men's Morris" });
         hostGameTypeDropdown.onValueChanged.RemoveAllListeners();
         hostGameTypeDropdown.onValueChanged.AddListener(OnHostGameTypeChanged);
 
+        // Time Options Dropdown - Add all timer modes
         hostTimeDropdown.ClearOptions();
-        hostTimeDropdown.AddOptions(new List<string> { "5:00", "10:00", "15:00" });
+        hostTimeDropdown.AddOptions(new List<string> {
+        "Casual",      // No timer
+        "5:00",        // 5 minute game timer
+        "10:00",       // 10 minute game timer  
+        "15:00",       // 15 minute game timer
+        "5s",          // 5 second turn timer
+        "15s",         // 15 second turn timer
+        "30s"          // 30 second turn timer
+    });
         hostTimeDropdown.onValueChanged.RemoveAllListeners();
         hostTimeDropdown.onValueChanged.AddListener(OnHostTimeChanged);
     }
@@ -400,17 +414,35 @@ public class UIManager : NetworkBehaviour
     {
         if (!isHost) return;
         string[] options = { "Morabaraba", "6 Men's Morris" };
-        RequestLobbySettingsUpdateServerRpc(options[index], gameTime);
+        string newGameType = options[index];
+
+        Debug.Log($"Host changed game type to: {newGameType}");
+
+        // Update local UI immediately
+        gameType = newGameType;
+        GameSettings.GameType = newGameType;
+
+        // Send to server (which will broadcast to all clients)
+        RequestLobbySettingsUpdateServerRpc(newGameType, gameTime);
     }
+
 
     void OnHostTimeChanged(int index)
     {
         if (!isHost) return;
-        string[] options = { "5:00", "10:00", "15:00" };
-        RequestLobbySettingsUpdateServerRpc(gameType, options[index]);
+        string[] options = { "Casual", "5:00", "10:00", "15:00", "5s", "15s", "30s" };
+        string newTime = options[index];
+
+        Debug.Log($"Host changed game time to: {newTime}");
+
+        // Update local UI immediately
+        gameTime = newTime;
+        GameSettings.GameTime = newTime;
+
+        // Send to server (which will broadcast to all clients)
+        RequestLobbySettingsUpdateServerRpc(gameType, newTime);
     }
 
-    // ✅ UPDATED: Use display list for UI
     void UpdateHostingPlayerList()
     {
         foreach (Transform child in hostPlayerListContainer) Destroy(child.gameObject);
@@ -462,15 +494,19 @@ public class UIManager : NetworkBehaviour
     {
         lobbyCode = "";
         relayJoinCode = "";
-        gameType = "12 Men's Morris";
-        gameTime = "5:00";
         playersInLobbyRaw.Clear();
         playersInLobbyDisplay.Clear();
         isHost = false;
         hostAllocation = default;
     }
 
-    [ContextMenu("Simulate Player Join (Host View)")]
+    public void ResetToMainMenuWithDefaults()
+    {
+        GameSettings.ResetToDefaults();
+        ClearLobbyData();
+        ShowMainMenu();
+    }
+
     public void SimulatePlayerJoin()
     {
         if (playersInLobbyRaw.Count < 3)
@@ -510,26 +546,26 @@ public class UIManager : NetworkBehaviour
         {
             if (NetworkManager.Singleton.StartHost())
             {
-                Debug.Log(" Host started successfully via Relay!");
+                Debug.Log("Host started successfully via Relay!");
                 // Host already added in InitializeHosting, just broadcast
                 BroadcastPlayerListUpdate();
             }
             else
             {
-                Debug.LogError("❌ Failed to start host");
+                Debug.LogError("Failed to start host");
             }
         }
         else
         {
             if (NetworkManager.Singleton.StartClient())
             {
-                Debug.Log("🎮 Client connected successfully via Relay!");
+                Debug.Log("Client connected successfully via Relay!");
                 // Start coroutine to send username after connection is ready
                 StartCoroutine(SendUsernameAfterConnect());
             }
             else
             {
-                Debug.LogError("❌ Failed to start client");
+                Debug.LogError("Failed to start client");
             }
         }
     }
@@ -568,7 +604,7 @@ public class UIManager : NetworkBehaviour
             myName = PlayerPrefs.GetString("PlayerUsername");
         }
 
-        Debug.Log($"📡 Client sending username: '{myName}' (CID: {NetworkManager.Singleton.LocalClientId})");
+        Debug.Log($"Client sending username: '{myName}' (CID: {NetworkManager.Singleton.LocalClientId})");
 
         // Safety check before sending RPC
         if (Instance != null)
@@ -577,23 +613,34 @@ public class UIManager : NetworkBehaviour
         }
         else
         {
-            Debug.LogError("❌ UIManager.Instance is null - cannot send username RPC");
+            Debug.LogError("UIManager.Instance is null - cannot send username RPC");
         }
     }
 
     [ServerRpc]
     void RequestLobbySettingsUpdateServerRpc(string newGameType, string newTime)
     {
-        gameType = newGameType;
-        gameTime = newTime;
-        UpdateLobbySettingsClientRpc(gameType, gameTime);
+        // Update the static settings on the server
+        GameSettings.GameType = newGameType;
+        GameSettings.GameTime = newTime;
+
+        Debug.Log($"SERVER: Settings updated - GameType: {GameSettings.GameType}, GameTime: {GameSettings.GameTime}");
+
+        // Broadcast to all clients
+        UpdateLobbySettingsClientRpc(newGameType, newTime);
     }
 
     [ClientRpc]
     void UpdateLobbySettingsClientRpc(string newGameType, string newTime)
     {
+        // Update local settings on clients
+        GameSettings.GameType = newGameType;
+        GameSettings.GameTime = newTime;
+
         gameType = newGameType;
         gameTime = newTime;
+
+        Debug.Log($"CLIENT: Settings updated - GameType: {GameSettings.GameType}, GameTime: {GameSettings.GameTime}");
 
         if (isHost)
         {
@@ -605,7 +652,7 @@ public class UIManager : NetworkBehaviour
             }
             if (hostTimeDropdown != null)
             {
-                string[] timeOptions = { "5:00", "10:00", "15:00" };
+                string[] timeOptions = { "Casual", "5:00", "10:00", "15:00", "5s", "15s", "30s" };
                 int index = System.Array.IndexOf(timeOptions, newTime);
                 if (index >= 0) hostTimeDropdown.value = index;
             }
@@ -617,7 +664,6 @@ public class UIManager : NetworkBehaviour
         }
     }
 
-    //  FIXED: This RPC now only updates the DISPLAY list, not raw data
     [ClientRpc]
     void UpdatePlayerListClientRpc(string displayNamesDelimited)
     {
@@ -790,8 +836,7 @@ public class UIManager : NetworkBehaviour
     // Server-only: Broadcast display list to all clients
     void BroadcastPlayerListUpdate()
     {
-        if (!IsServer) return; // Safety check
-
+        if (!IsServer) return;
         string delimited = string.Join("|", playersInLobbyDisplay);
         UpdatePlayerListClientRpc(delimited);
     }
@@ -799,18 +844,13 @@ public class UIManager : NetworkBehaviour
     public void PlayerReturnedToLobby(ulong clientId)
     {
         if (!IsServer) return;
-
         playerSceneStates[clientId] = PlayerSceneState.InLobby;
-
         Debug.Log($"Client {clientId} returned to lobby");
-
         CheckAllPlayersReturned();
     }
 
     void CheckAllPlayersReturned()
     {
-        Debug.Log("===== PLAYER STATES =====");
-
         foreach (var kvp in playerSceneStates)
         {
             Debug.Log($"Client {kvp.Key} = {kvp.Value}");
@@ -819,7 +859,7 @@ public class UIManager : NetworkBehaviour
         bool everyoneBack = playerSceneStates.Values
             .All(state => state == PlayerSceneState.InLobby);
 
-        Debug.Log($"Everyone Back? {everyoneBack}");
+        Debug.Log($"Is everyone Back? {everyoneBack}");
 
         if (everyoneBack)
         {

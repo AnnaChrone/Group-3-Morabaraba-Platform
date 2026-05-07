@@ -110,6 +110,8 @@ public class GameController : NetworkBehaviour
     public GameObject LossScreen;
     public TextMeshProUGUI LossReason;
     public TextMeshProUGUI LossGameStats;
+    public GameObject DrawScreen;
+    public TextMeshProUGUI DrawReason;
 
     [Header("Rewind UI")]
     public TextMeshProUGUI RewindText;
@@ -121,6 +123,27 @@ public class GameController : NetworkBehaviour
 
     public TextMeshProUGUI Player2Pieces;
     public TextMeshProUGUI Player2Captures;
+
+    [Header("Timers")]
+    private float lastTimerUpdate = 0f;
+    private const float TIMER_UPDATE_INTERVAL = 0.1f; // Update UI 10 times per second
+    public TextMeshProUGUI TimerUI;
+    private float player1Time;
+    private float player2Time;
+    public enum TimerMode
+    {
+        None,
+        GameTimer,
+        TurnTimer
+    }
+
+    private TimerMode timerMode = TimerMode.None;
+
+    private float gameTimeRemaining;
+    private float turnTimeRemaining;
+    private float timerTick = 1f;
+    private float timerAcc = 0f;
+    private bool timerRunning = false;
 
     private SlotID selectedSlot = null;
     
@@ -159,9 +182,52 @@ public class GameController : NetworkBehaviour
     }
     void Update()
     {
-        if (!IsSpawned || !networkReady) return;
+        if (!IsSpawned || !networkReady || GameEnded.Value || !timerRunning)
+            return;
 
-        // Highlight selected slot during moving phase
+        float dt = Time.deltaTime;
+        timerAcc += dt;
+
+        // Update timer logic on server only
+        if (IsServer)
+        {
+            if (timerMode == TimerMode.GameTimer)
+            {
+                gameTimeRemaining -= dt;
+
+                if (gameTimeRemaining <= 0f)
+                {
+                    gameTimeRemaining = 0f;
+                    EndGameByTime(0); // Draw by timeout
+                    return;
+                }
+            }
+            else if (timerMode == TimerMode.TurnTimer)
+            {
+                turnTimeRemaining -= dt;
+
+                if (turnTimeRemaining <= 0f)
+                {
+                    turnTimeRemaining = 0f;
+                    // Time's up - end turn
+                    EndTurn();
+                    ResetTurnTimer();
+
+                    // Notify clients of timer reset
+                    UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
+                    return;
+                }
+            }
+
+            // Send timer updates to clients periodically
+            if (timerAcc >= TIMER_UPDATE_INTERVAL)
+            {
+                timerAcc = 0f;
+                UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
+            }
+        }
+
+        // Highlight selected slot during moving phase (moved outside server check)
         if (CurrentPhase.Value == GamePhase.Moving && SelectedSlot.Value != 0)
         {
             var slot = GetSlotByNumber(SelectedSlot.Value);
@@ -172,18 +238,10 @@ public class GameController : NetworkBehaviour
                 {
                     slotUI.Highlight(CurrentPlayer.Value);
                 }
-
                 slot.GetComponent<UnityEngine.UI.Button>().interactable = true;
             }
         }
-
-        // Optional debug logging at frame 120
-        if (Time.frameCount == 120)
-        {
-            Debug.Log($"[GC] Frame 120 | IsSpawned: {IsSpawned} | networkReady: {networkReady}");
-        }
     }
-
     //INITIALIZATION
 
     void OnEnable() => SetButtonsInteractable(false);
@@ -191,8 +249,19 @@ public class GameController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
+        // Read current settings
+        string gameType = GameSettings.GameType;
+        string gameTimeSetting = GameSettings.GameTime;
+
+        Debug.Log($"=== GAMECONTROLLER ONNETWORKSPAWN ===");
+        Debug.Log($"Game Type from settings: {gameType}");
+        Debug.Log($"Game Time from settings: {gameTimeSetting}");
+        Debug.Log($"IsServer: {IsServer}");
+        Debug.Log($"LocalClientId: {NetworkManager.Singleton?.LocalClientId}");
+
         localPlayerId = NetworkManager.Singleton.LocalClientId == 0 ? 1 : 2;
-        Debug.Log($" OnNetworkSpawn called | IsServer: {IsServer} | ClientId: {NetworkManager.Singleton?.LocalClientId}");
+
         if (loadingText != null)
             loadingText.text = "Syncing Game State...";
 
@@ -209,7 +278,8 @@ public class GameController : NetworkBehaviour
         if (IsServer)
         {
             InitializeGameState();
-            Debug.Log(" Game state initialized");
+            SetupTimer(gameTimeSetting);
+            Debug.Log($"Server: Timer setup with {gameTimeSetting}");
         }
 
         ApplySlotStatesToVisuals();
@@ -217,6 +287,8 @@ public class GameController : NetworkBehaviour
 
         StartCoroutine(FinishLoading());
     }
+
+
     void OnCaptureChanged(int oldVal, int newVal)
     {
         UpdatePiecesToPlaceUI();
@@ -266,7 +338,7 @@ public class GameController : NetworkBehaviour
         Debug.Log($"GameController Start() | IsListening: {NetworkManager.Singleton?.IsListening}");
         Debug.Log($"GameController IsSpawned: {IsSpawned}");
         Debug.Log($"NetworkManager active: {NetworkManager.Singleton != null}");
-        Debug.Log($"IsListening: {NetworkManager.Singleton?.IsListening}");
+        Debug.Log($"Current GameSettings - Type: {GameSettings.GameType}, Time: {GameSettings.GameTime}");
     }
 
     void InitializeGameState()
@@ -519,6 +591,12 @@ public class GameController : NetworkBehaviour
     void EndTurn()
     {
         CurrentPlayer.Value = (CurrentPlayer.Value == 1) ? 2 : 1;
+
+        // Reset turn timer when turn changes
+        if (timerMode == TimerMode.TurnTimer)
+        {
+            ResetTurnTimer();
+        }
     }
 
     void ServerGameOver(int winner, string winReason, string lossReason)
@@ -533,7 +611,13 @@ public class GameController : NetworkBehaviour
         Debug.Log($"GAME OVER: Player {winner} wins!");
         UpdateRewindUI();
 
-        if (winner == localPlayerId)
+        if (winner == 0)
+        {
+            DrawReason.text = winReason;
+            DrawScreen.SetActive(true);
+           // AudioController.Instance?.PlayAudio("Draw"); add draw
+        }
+        else if (winner == localPlayerId)
         {
             PlayerData.Instance.AddWin();
             WinReason.text = winReason;
@@ -848,6 +932,8 @@ public class GameController : NetworkBehaviour
         UpdatePiecesToPlaceUI(); // THis is what updates clients
     }
 
+    
+
     //Rewind Functions
     void SaveSnapshot()
     {
@@ -993,6 +1079,134 @@ public class GameController : NetworkBehaviour
         // PlaySoundClientRpc("Rewind");
     }
 
+    //Timer Functions
+
+    void SetupTimer(string gameTimeSetting)
+    {
+        timerMode = TimerMode.None;
+        timerRunning = true;
+
+        // Check for turn timer modes first
+        if (gameTimeSetting == "5s" || gameTimeSetting == "15s" || gameTimeSetting == "30s")
+        {
+            timerMode = TimerMode.TurnTimer;
+
+            switch (gameTimeSetting)
+            {
+                case "5s": turnTimeRemaining = 5f; break;
+                case "15s": turnTimeRemaining = 15f; break;
+                case "30s": turnTimeRemaining = 30f; break;
+                default: turnTimeRemaining = 30f; break;
+            }
+            Debug.Log($"Turn timer mode enabled: {turnTimeRemaining} seconds per turn");
+        }
+        // Check for game timer modes
+        else if (gameTimeSetting == "5:00" || gameTimeSetting == "10:00" || gameTimeSetting == "15:00")
+        {
+            timerMode = TimerMode.GameTimer;
+
+            switch (gameTimeSetting)
+            {
+                case "5:00": gameTimeRemaining = 300f; break;
+                case "10:00": gameTimeRemaining = 600f; break;
+                case "15:00": gameTimeRemaining = 900f; break;
+                default: gameTimeRemaining = 600f; break;
+            }
+            Debug.Log($"Game timer mode enabled: {gameTimeRemaining} seconds total");
+        }
+        else
+        {
+            // No timer
+            timerMode = TimerMode.None;
+            timerRunning = false;
+            Debug.Log("No timer mode - casual play");
+        }
+
+        // Initial UI update
+        UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
+    }
+
+    [ClientRpc]
+    void UpdateTimerClientRpc(float gameTime, float turnTime, TimerMode mode)
+    {
+        timerMode = mode;
+        gameTimeRemaining = gameTime;
+        turnTimeRemaining = turnTime;
+        UpdateTimerUI();
+    }
+
+    void UpdateTimerUI()
+    {
+        if (TimerUI == null) return;
+
+        if (timerMode == TimerMode.GameTimer)
+        {
+            TimerUI.text = $"Time Left: {FormatTime(gameTimeRemaining)}";
+            TimerUI.color = gameTimeRemaining < 60f ? Color.red : Color.white;
+        }
+        else if (timerMode == TimerMode.TurnTimer)
+        {
+            TimerUI.text = $"Turn Time: {FormatTime(turnTimeRemaining)}";
+            TimerUI.color = turnTimeRemaining < 10f ? Color.red : Color.white;
+        }
+        else
+        {
+            TimerUI.text = "Casual Mode";
+            TimerUI.color = Color.white;
+        }
+    }
+
+
+    string FormatTime(float t)
+    {
+        if (t < 0) t = 0;
+        int minutes = Mathf.FloorToInt(t / 60f);
+        int seconds = Mathf.FloorToInt(t % 60f);
+        return $"{minutes:00}:{seconds:00}";
+    }
+
+    void ResetTurnTimer()
+    {
+        if (timerMode != TimerMode.TurnTimer) return;
+
+        switch (GameSettings.GameTime)
+        {
+            case "5s": turnTimeRemaining = 5f; break;
+            case "15s": turnTimeRemaining = 15f; break;
+            case "30s": turnTimeRemaining = 30f; break;
+            default: turnTimeRemaining = 30f; break;
+        }
+
+        // Send update to clients
+        UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
+    }
+
+    void EndGameByTime(int loserPlayerId)
+    {
+        if (GameEnded.Value) return;
+
+        timerRunning = false;
+        GameEnded.Value = true;
+
+        int winner = (loserPlayerId == 1) ? 2 : 1;
+
+        if (loserPlayerId == 0)
+        {
+            // Draw by timeout
+            ServerGameOver(0, "Game ended in a draw - Time's up!", "Game ended in a draw - Time's up!");
+        }
+        else
+        {
+            ServerGameOver(winner, "Opponent ran out of time!", "You ran out of time!");
+        }
+    }
+
+    public void PauseTimer(bool pause)
+    {
+        timerRunning = !pause;
+    }
+
+
 
     //Helper Functions
     SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);
@@ -1008,3 +1222,4 @@ public enum GamePhase
     Capturing,
     End
 }
+
