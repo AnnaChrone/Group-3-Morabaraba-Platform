@@ -5,16 +5,28 @@ using Unity.Collections;
 using Unity.Netcode;
 using Unity.Services.CloudSave.Models.Data.Player;
 using UnityEngine;
+using UnityEngine.UI;
 
+[System.Serializable]
+public class GameSnapshot //This allows for the rewind function to work
+{
+    public int currentPlayer;
+    public int placementCounter;
+
+    public int player1Pieces;
+    public int player2Pieces;
+
+    public int player1Captures;
+    public int player2Captures;
+
+    public GamePhase phase;
+
+    public int selectedSlot;
+
+    public string slotStates;
+}
 public class GameController : NetworkBehaviour
 {
-    //public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(1);
-    //public NetworkVariable<int> PlacementCounter = new NetworkVariable<int>(0);
-    //public NetworkVariable<int> Player1PiecesOnBoard = new NetworkVariable<int>(12);
-    //public NetworkVariable<int> Player2PiecesOnBoard = new NetworkVariable<int>(12);
-    //public NetworkVariable<GamePhase> CurrentPhase = new NetworkVariable<GamePhase>(GamePhase.Placing);
-    //public NetworkVariable<bool> GameEnded = new NetworkVariable<bool>(false);
-    //public NetworkVariable<int> SelectedSlot = new NetworkVariable<int>(0);
     public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(
     1,
     NetworkVariableReadPermission.Everyone,
@@ -66,6 +78,18 @@ public class GameController : NetworkBehaviour
     // Track slot ownership: slotNumber -> playerID (0 = empty)
     public NetworkVariable<FixedString4096Bytes> SlotStates = new NetworkVariable<FixedString4096Bytes>("");
 
+    //Rewind Variabe counters
+    public NetworkVariable<int> Player1Rewinds = new NetworkVariable<int>(
+    3,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+);
+
+    public NetworkVariable<int> Player2Rewinds = new NetworkVariable<int>(
+        3,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
     [Header("Loading UI")]
     public GameObject loadingPanel;
     public TextMeshProUGUI loadingText;
@@ -87,6 +111,10 @@ public class GameController : NetworkBehaviour
     public TextMeshProUGUI LossReason;
     public TextMeshProUGUI LossGameStats;
 
+    [Header("Rewind UI")]
+    public TextMeshProUGUI RewindText;
+    public Button rewindButton;
+
     [Header("Player piece depiction")]
     public TextMeshProUGUI Player1Pieces;
     public TextMeshProUGUI Player1Captures;
@@ -95,6 +123,9 @@ public class GameController : NetworkBehaviour
     public TextMeshProUGUI Player2Captures;
 
     private SlotID selectedSlot = null;
+    
+    //rewind functionality
+    private List<GameSnapshot> gameHistory = new List<GameSnapshot>();
 
     // Adjacency and mills data - Morabaraba specific
     private readonly Dictionary<int, int[]> adjacency = new Dictionary<int, int[]>()
@@ -172,6 +203,8 @@ public class GameController : NetworkBehaviour
         SlotStates.OnValueChanged += OnSlotStatesChanged;
         Player1CapturesCount.OnValueChanged += OnCaptureChanged;
         Player2CapturesCount.OnValueChanged += OnCaptureChanged;
+        Player1Rewinds.OnValueChanged += OnRewindChanged;
+        Player2Rewinds.OnValueChanged += OnRewindChanged;
 
         if (IsServer)
         {
@@ -203,6 +236,7 @@ public class GameController : NetworkBehaviour
 
         SetButtonsInteractable(true);
         UpdatePiecesToPlaceUI();
+        UpdateRewindUI();
     }
 
     void SetButtonsInteractable(bool enabled)
@@ -222,6 +256,8 @@ public class GameController : NetworkBehaviour
         SlotStates.OnValueChanged -= OnSlotStatesChanged;
         Player1CapturesCount.OnValueChanged -= OnCaptureChanged;
         Player2CapturesCount.OnValueChanged -= OnCaptureChanged;
+        Player1Rewinds.OnValueChanged -= OnRewindChanged;
+        Player2Rewinds.OnValueChanged -= OnRewindChanged;
         base.OnNetworkDespawn();
     }
 
@@ -311,22 +347,24 @@ public class GameController : NetworkBehaviour
         ulong senderClientId = rpcParams.Receive.SenderClientId;
         int requestingPlayer = (senderClientId == 0) ? 1 : 2;
 
-        Debug.Log($"🔍 Validation: CurrentPlayer={CurrentPlayer.Value}, RequestingPlayer={requestingPlayer}");
+        Debug.Log($"Validation: CurrentPlayer={CurrentPlayer.Value}, RequestingPlayer={requestingPlayer}");
 
         if (CurrentPlayer.Value != requestingPlayer)
         {
-            Debug.LogWarning($"❌ Wrong player! Rejecting request. Current={CurrentPlayer.Value}, Requested={requestingPlayer}");
+            Debug.LogWarning($"Wrong player! Rejecting request. Current={CurrentPlayer.Value}, Requested={requestingPlayer}");
             return;
         }
 
         SlotID slot = GetSlotByNumber(slotNumber);
         if (slot == null)
         {
-            Debug.LogError($"❌ Slot {slotNumber} not found!");
+            Debug.LogError($"Slot {slotNumber} not found!");
             return;
         }
 
-        Debug.Log($"✅ Processing move for Slot {slotNumber} in Phase {phase}");
+        Debug.Log($"Processing move for Slot {slotNumber} in Phase {phase}");
+
+        
 
         switch (phase)
         {
@@ -340,7 +378,7 @@ public class GameController : NetworkBehaviour
                 ServerHandleCapturing(slot);
                 break;
             default:
-                Debug.LogWarning($"⚠️ Unknown phase: {phase}");
+                Debug.LogWarning($"Unknown phase: {phase}");
                 break;
         }
     }
@@ -349,7 +387,7 @@ public class GameController : NetworkBehaviour
     void ServerHandlePlacing(SlotID slot)
     {
         if (GetSlotOwner(slot.slotNumber) != 0) return;
-
+        SaveSnapshot(); //stores snapshot per turn
         SetSlotOwner(slot.slotNumber, CurrentPlayer.Value);
         //Change display of current player's pieces left
         if (CurrentPlayer.Value == 1)
@@ -401,7 +439,7 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-
+        SaveSnapshot(); //stores snapshot per turn
         bool isFlying =
             (currentPlayer == 1 ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value) <= 3;
 
@@ -449,7 +487,7 @@ public class GameController : NetworkBehaviour
 
         if (slot.isInMill && OpponentHasFreePiece(opponent))
             return;
-
+        SaveSnapshot(); //stores snapshot per turn
         SetSlotOwner(slot.slotNumber, 0);
 
         if (CurrentPlayer.Value == 1)
@@ -493,6 +531,7 @@ public class GameController : NetworkBehaviour
     void GameOverClientRpc(int winner, string winReason, string lossReason)
     {
         Debug.Log($"GAME OVER: Player {winner} wins!");
+        UpdateRewindUI();
 
         if (winner == localPlayerId)
         {
@@ -777,11 +816,16 @@ public class GameController : NetworkBehaviour
         UIManager.Instance.PlayerReturnedToLobby(clientId);
     }
 
-    void OnCurrentPlayerChanged(int oldVal, int newVal) => UpdateTurnIndicator();
+    void OnCurrentPlayerChanged(int oldVal, int newVal)
+    {
+        UpdateTurnIndicator();
+        UpdateRewindUI();
+    }
     void OnPhaseChanged(GamePhase oldVal, GamePhase newVal)
     {
         UpdateTurnIndicator();
         UpdatePiecesToPlaceUI(); 
+        UpdateRewindUI();
     }
 
     void UpdateTurnIndicator()
@@ -803,6 +847,152 @@ public class GameController : NetworkBehaviour
         UpdateTurnIndicator();
         UpdatePiecesToPlaceUI(); // THis is what updates clients
     }
+
+    //Rewind Functions
+    void SaveSnapshot()
+    {
+        GameSnapshot snapshot = new GameSnapshot()
+        {
+            currentPlayer = CurrentPlayer.Value,
+            placementCounter = PlacementCounter.Value,
+
+            player1Pieces = Player1PiecesOnBoard.Value,
+            player2Pieces = Player2PiecesOnBoard.Value,
+
+            player1Captures = Player1CapturesCount.Value,
+            player2Captures = Player2CapturesCount.Value,
+
+            phase = CurrentPhase.Value,
+
+            selectedSlot = SelectedSlot.Value,
+
+            slotStates = SlotStates.Value.ToString()
+        };
+
+        gameHistory.Add(snapshot);
+
+        Debug.Log($"Snapshot saved. Count: {gameHistory.Count}");
+    }
+
+    void LoadSnapshot(GameSnapshot snapshot)
+    {
+        CurrentPlayer.Value = snapshot.currentPlayer;
+
+        PlacementCounter.Value = snapshot.placementCounter;
+
+        Player1PiecesOnBoard.Value = snapshot.player1Pieces;
+        Player2PiecesOnBoard.Value = snapshot.player2Pieces;
+
+        Player1CapturesCount.Value = snapshot.player1Captures;
+        Player2CapturesCount.Value = snapshot.player2Captures;
+
+        CurrentPhase.Value = snapshot.phase;
+
+        SelectedSlot.Value = snapshot.selectedSlot;
+
+        SlotStates.Value = snapshot.slotStates;
+
+        ApplySlotStatesToVisuals();
+
+        UpdatePiecesToPlaceUI();
+
+        UpdateTurnIndicator();
+
+        Debug.Log("Snapshot restored.");
+    }
+
+    public void OnRewindPressed()
+    {
+        if (!IsLocalPlayerTurn())
+        {
+            Debug.Log("Not your turn.");
+            return;
+        }
+
+        int rewindsLeft = localPlayerId == 1? Player1Rewinds.Value: Player2Rewinds.Value;
+
+        if (rewindsLeft <= 0)
+        {
+            rewindButton.interactable = false;
+            return;
+        }
+
+        RequestRewindServerRpc();
+    }
+
+    void UpdateRewindUI()
+    {
+        int rewindsLeft = localPlayerId == 1? Player1Rewinds.Value: Player2Rewinds.Value;
+
+        RewindText.text = $"Rewinds Left: {rewindsLeft}";
+
+        rewindButton.interactable = IsLocalPlayerTurn() && rewindsLeft > 0 && !GameEnded.Value;
+    }
+
+    void OnRewindChanged(int oldVal, int newVal)
+    {
+        UpdateRewindUI();
+    }
+    [ServerRpc(RequireOwnership = false)]
+    void RequestRewindServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong senderClientId = rpcParams.Receive.SenderClientId;
+
+        int requestingPlayer =
+            senderClientId == 0 ? 1 : 2;
+
+        // Only current player can rewind
+        if (CurrentPlayer.Value != requestingPlayer)
+        {
+            Debug.Log("Not this player's turn.");
+            return;
+        }
+
+        // Check rewind counts
+        if (requestingPlayer == 1)
+        {
+            if (Player1Rewinds.Value <= 0)
+            {
+                Debug.Log("Player 1 has no rewinds left.");
+                return;
+            }
+
+            Player1Rewinds.Value--;
+        }
+        else
+        {
+            if (Player2Rewinds.Value <= 0)
+            {
+                Debug.Log("Player 2 has no rewinds left.");
+                return;
+            }
+
+            Player2Rewinds.Value--;
+        }
+
+        // Need at least 2 snapshots
+        if (gameHistory.Count < 2)
+        {
+            Debug.Log("Not enough history to rewind.");
+            return;
+        }
+
+        // Remove newest state
+        gameHistory.RemoveAt(gameHistory.Count - 1);
+
+        // Restore previous state
+        GameSnapshot snapshot =  gameHistory[gameHistory.Count - 1];
+
+        // Remove restored snapshot
+        gameHistory.RemoveAt(gameHistory.Count - 1);
+
+        LoadSnapshot(snapshot);
+
+        Debug.Log($"Player {requestingPlayer} used rewind.");
+
+        // PlaySoundClientRpc("Rewind");
+    }
+
 
     //Helper Functions
     SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);

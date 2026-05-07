@@ -8602,6 +8602,16 @@ MonoBehaviour:
         byte4091: 0
         byte4092: 0
         byte4093: 0
+  Player1Rewinds:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 3
+  Player2Rewinds:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 3
   loadingPanel: {fileID: 392347887}
   loadingText: {fileID: 378738094}
   CurrentTurnIndicator: {fileID: 1987884776}
@@ -8638,6 +8648,8 @@ MonoBehaviour:
   LossScreen: {fileID: 1076277963}
   LossReason: {fileID: 464357849}
   LossGameStats: {fileID: 1210909304}
+  RewindText: {fileID: 1859795124}
+  rewindButton: {fileID: 2073196490}
   Player1Pieces: {fileID: 27340285}
   Player1Captures: {fileID: 8789713}
   Player2Pieces: {fileID: 1948004216}
@@ -20270,7 +20282,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2073196491}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 343618802}
+        m_TargetAssemblyTypeName: GameController, Assembly-CSharp
+        m_MethodName: OnRewindPressed
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2073196491
 MonoBehaviour:
   m_ObjectHideFlags: 0
