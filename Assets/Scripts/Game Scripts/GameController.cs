@@ -715,6 +715,7 @@ public class GameController : NetworkBehaviour
             DrawReason.text = winReason;
             DrawScreen.SetActive(true);
              AudioController.Instance?.PlayAudio("Draw"); 
+             //Add draw thing here
         }
         else if (winner == localPlayerId)
         {

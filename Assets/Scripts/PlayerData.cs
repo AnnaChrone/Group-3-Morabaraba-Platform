@@ -1,4 +1,7 @@
 ﻿using UnityEngine;
+using Unity.Services.CloudSave;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public class PlayerData : MonoBehaviour
 {
@@ -8,6 +11,7 @@ public class PlayerData : MonoBehaviour
     public string Password{get; private set;}
     public float wins {get; private set;}
     public float losses {get; private set;}
+    public CreateUsername createUsername;
 
     private void Awake()
     {
@@ -51,10 +55,12 @@ public class PlayerData : MonoBehaviour
     {
         wins = Wins;
     }
-    public void AddWin()
+    public async Task AddWin()
     {
         wins++;
+        await createUsername.SaveCloudData(Username, Password);
         Debug.Log("Wins for " + Username + ": " + wins);
+        
     }
 
     public void setLoss(float lossNum)
@@ -62,9 +68,10 @@ public class PlayerData : MonoBehaviour
         losses = lossNum;
     }
 
-    public void AddLoss()
+    public async void AddLoss()
     {
         losses++;
+        await createUsername.SaveCloudData(Username, Password);
         Debug.Log("Losses for "+ Username + ": " +losses);
     }
 }
