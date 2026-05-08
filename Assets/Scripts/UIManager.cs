@@ -23,6 +23,7 @@ public class UIManager : NetworkBehaviour
     public GameObject hostingPanel;
     public GameObject joiningPanel;
     public GameObject errorPanel;
+    public GameObject profilePanel;
     public TextMeshProUGUI errorText;
 
     [Header("Hosting Panel References")]
@@ -109,6 +110,8 @@ public class UIManager : NetworkBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         }
+
+
     }
 
     public void ReturnToMainMenuAsClient()
@@ -883,6 +886,8 @@ public class UIManager : NetworkBehaviour
 
         PlayerReturnedToLobby(clientId);
     }
+
+   
 }
 
 public enum PlayerSceneState { InLobby, LoadingGame, InGame, ReturningToLobby }
