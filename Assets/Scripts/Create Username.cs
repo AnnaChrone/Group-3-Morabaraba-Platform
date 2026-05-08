@@ -85,7 +85,7 @@ public class CreateUsername : MonoBehaviour
         Debug.Log("Account created");
         PlayerData.Instance.SetUsername(username);
 
-        await SaveCloudData(); // optional
+        await SaveCloudData(username, password); // optional
 
         LoadLobbyScene();
     }
@@ -174,10 +174,12 @@ public class CreateUsername : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
     }
 
-    async Task SaveCloudData() //Create a save username button, add save password
+    async Task SaveCloudData(string username, string password) //Create a save username button, add save password
     {
         var data = new Dictionary<string, object>
         {
+            {"username", username},
+            {"password", password},
             {"wins", playerWins},
             {"losses", playerLosses},
             { "lastLogin", System.DateTime.UtcNow.ToString() }
@@ -191,11 +193,16 @@ public class CreateUsername : MonoBehaviour
     async Task LoadCloudData() //Move this to the sign in button
     {
         
-        var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "wins", "losses" });
+        var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "wins", "losses","username","password" });
 
         playerWins = data.ContainsKey("wins") ? float.Parse(data["wins"].ToString()) : 0;
         playerLosses = data.ContainsKey("losses") ? float.Parse(data["losses"].ToString()) : 0;
+
+        string username = data.ContainsKey("username") ? data["username"].ToString() : "";
+        string password = data.ContainsKey("password") ? data["password"].ToString() : "";
        
+       Debug.Log("Username: " + username);
+       Debug.Log("Password: " + password);
     }
 
     void ExecuteSceneLoad()
