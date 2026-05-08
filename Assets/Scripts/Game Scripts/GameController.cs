@@ -97,6 +97,19 @@ public class GameController : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+
+    public NetworkVariable<bool> IsGamePaused = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public NetworkVariable<ulong> PauseRequesterClientId = new NetworkVariable<ulong>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     [Header("Game Type Configuration")]
     public GameTypeData morabarabaData;
     public GameTypeData sixMensMorrisData;
@@ -147,6 +160,17 @@ public class GameController : NetworkBehaviour
     public TextMeshProUGUI TimerUI;
     private float player1Time;
     private float player2Time;
+
+    [Header("Pause Logic")]
+    private float lastPauseRequestTime = 0f;
+    private const float PAUSE_COOLDOWN = 0.5f;
+    public GameObject pausePanel;
+  //  public TextMeshProUGUI pauseStatusText;
+    public Button forfeitButton;
+    public Button rulesButton;
+    public Button closeGameButton;
+    private bool isLocallyPaused = false;
+
     public enum TimerMode
     {
         None,
@@ -181,6 +205,29 @@ public class GameController : NetworkBehaviour
     }
     void Update()
     {
+        if (IsServer && IsGamePaused.Value && pauseStartTime > 0)
+        {
+            if (Time.time - pauseStartTime >= MAX_PAUSE_DURATION)
+            {
+                Debug.Log("Auto-resuming game - maximum pause duration reached");
+                IsGamePaused.Value = false;
+                PauseRequesterClientId.Value = 0;
+                Time.timeScale = 1f;
+            }
+        }
+        // Don't process game logic if paused
+        if (IsGamePaused.Value)
+            return;
+
+        // Check for pause key (Escape)
+        if (Input.GetKeyDown(KeyCode.Escape) && !GameEnded.Value && IsSpawned)
+        {
+            if (IsGamePaused.Value)
+                RequestResume();
+            else
+                RequestPause();
+        }
+
         if (!IsSpawned || !networkReady || GameEnded.Value || !timerRunning)
             return;
 
@@ -243,7 +290,12 @@ public class GameController : NetworkBehaviour
     }
     //INITIALIZATION
 
-    void OnEnable() => SetButtonsInteractable(false);
+    void OnEnable()
+    {
+        SetButtonsInteractable(false);
+        // Register pause callback
+        IsGamePaused.OnValueChanged += OnPauseStateChanged;
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -278,6 +330,7 @@ public class GameController : NetworkBehaviour
         Player1Rewinds.OnValueChanged += OnRewindChanged;
         Player2Rewinds.OnValueChanged += OnRewindChanged;
         TotalGameTime.OnValueChanged += OnTotalGameTimeChanged;
+        IsGamePaused.OnValueChanged += OnPauseStateChanged;
 
         if (IsServer)
         {
@@ -344,15 +397,18 @@ public class GameController : NetworkBehaviour
         Player1Rewinds.OnValueChanged -= OnRewindChanged;
         Player2Rewinds.OnValueChanged -= OnRewindChanged;
         TotalGameTime.OnValueChanged -= OnTotalGameTimeChanged;
+        IsGamePaused.OnValueChanged -= OnPauseStateChanged;
         base.OnNetworkDespawn();
     }
 
+    private string gameType;
     void Start()
     {
         Debug.Log($"GameController Start() | IsListening: {NetworkManager.Singleton?.IsListening}");
         Debug.Log($"GameController IsSpawned: {IsSpawned}");
         Debug.Log($"NetworkManager active: {NetworkManager.Singleton != null}");
         Debug.Log($"Current GameSettings - Type: {GameSettings.GameType}, Time: {GameSettings.GameTime}");
+        gameType = GameSettings.GameType;   
     }
 
     void InitializeGameState()
@@ -625,6 +681,11 @@ public class GameController : NetworkBehaviour
     void ServerGameOver(int winner, string winReason, string lossReason)
     {
         if (GameEnded.Value) return;
+        if (IsGamePaused.Value)
+        {
+            IsGamePaused.Value = false;
+            Time.timeScale = 1f;
+        }
 
         GameEnded.Value = true;
 
@@ -967,6 +1028,15 @@ public class GameController : NetworkBehaviour
         if (!IsSpawned || GameEnded.Value)
             return;
 
+        // If game is paused, resume it first
+        if (IsGamePaused.Value && IsServer)
+        {
+            IsGamePaused.Value = false;
+            RequestResume();
+            PauseRequesterClientId.Value = 0;
+            Time.timeScale = 1f;
+        }
+
         SubmitForfeitServerRpc();
     }
 
@@ -994,6 +1064,15 @@ public class GameController : NetworkBehaviour
     {
         open = !open;
         Rules.SetActive(open);
+
+        if (open)
+        {
+            RequestPause();
+        }
+        else
+        {
+            RequestResume();
+        }
     }
 
     public void onGoToLobby()
@@ -1003,7 +1082,6 @@ public class GameController : NetworkBehaviour
 
     System.Collections.IEnumerator ReturnToLobbyRoutine()
     {
-        string gameType = GameSettings.GameType;
         UIManager.Instance.NotifyReturnedToLobby();
         if  (gameType == "Morabaraba")
         {
@@ -1329,11 +1407,241 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    public void PauseTimer(bool pause)
+    public void PauseGame(bool pause)
     {
         timerRunning = !pause;
+
+        if (pause)
+        {
+            // Show pause panel (you need to add a reference to a pause panel UI)
+            if (pausePanel != null)
+                pausePanel.SetActive(true);
+
+            // Disable user input on clicking slots
+            SetButtonsInteractable(false);
+
+            // Disable rewind button
+            if (rewindButton != null)
+                rewindButton.interactable = false;
+
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            // Hide pause panel
+            if (pausePanel != null)
+                pausePanel.SetActive(false);
+
+            // Re-enable input based on current game state
+            SetButtonsInteractable(true);
+
+            // Re-enable rewind button if conditions are met
+            if (rewindButton != null && IsLocalPlayerTurn() && !GameEnded.Value)
+            {
+                int rewindsLeft = localPlayerId == 1 ? Player1Rewinds.Value : Player2Rewinds.Value;
+                rewindButton.interactable = rewindsLeft > 0;
+            }
+
+            Time.timeScale = 1f;
+        }
+    }
+    private float pauseStartTime = 0f;
+    private const float MAX_PAUSE_DURATION = 300f; // 5 minutes max pause
+    void OnPauseStateChanged(bool oldVal, bool newVal)
+    {
+        if (newVal)
+        {
+            pauseStartTime = Time.time;
+            isLocallyPaused = true;
+            timerRunning = false;
+
+            // Show pause UI
+            if (pausePanel != null)
+                pausePanel.SetActive(true);
+
+            // Show who paused
+            /*if (pauseStatusText != null && PauseRequesterClientId.Value != 0)
+            {
+                int pausingPlayer = (PauseRequesterClientId.Value == 0) ? 1 : 2;
+                pauseStatusText.text = $"Game Paused by Player {pausingPlayer}\nPress Resume to continue";
+            }*/
+
+            // Disable game board but keep UI buttons
+            SetGameBoardInteractable(false);
+
+            // Freeze time for everyone
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            pauseStartTime = 0f;
+            isLocallyPaused = false;
+            timerRunning = true;
+
+            // Hide pause UI
+            if (pausePanel != null)
+                pausePanel.SetActive(false);
+
+            // Re-enable game board based on game state
+            SetGameBoardInteractable(true);
+
+            // Resume time
+            Time.timeScale = 1f;
+        }
     }
 
+    public void RequestPause()
+    {
+        if (!IsSpawned || GameEnded.Value)
+            return;
+
+        // Check cooldown
+        if (Time.time - lastPauseRequestTime < PAUSE_COOLDOWN)
+        {
+            Debug.Log("Pause on cooldown");
+            return;
+        }
+
+        lastPauseRequestTime = Time.time;
+
+        // Send pause request to server
+        RequestPauseServerRpc();
+    }
+
+    public void RequestResume()
+    {
+        if (!IsSpawned || GameEnded.Value)
+            return;
+
+        // Only the player who paused OR the server can resume
+        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+
+        if (IsServer || PauseRequesterClientId.Value == localClientId)
+        {
+            RequestResumeServerRpc();
+        }
+        else
+        {
+            Debug.Log("Only the player who paused can resume the game");
+            /*if (pauseStatusText != null)
+                pauseStatusText.text = $"Waiting for Player {(PauseRequesterClientId.Value == 0 ? 1 : 2)} to resume...";
+       */
+            }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void RequestPauseServerRpc(ServerRpcParams rpcParams = default)
+    {
+        if (IsGamePaused.Value)
+        {
+            Debug.Log("Game is already paused");
+            return;
+        }
+
+        ulong requesterId = rpcParams.Receive.SenderClientId;
+
+        // Optional: Add vote-based pause system
+        // For now, allow any player to pause
+
+        Debug.Log($"Player {requesterId} requested pause");
+
+        IsGamePaused.Value = true;
+        PauseRequesterClientId.Value = requesterId;
+
+        // Notify all clients about pause
+        PauseStateChangedClientRpc(true, requesterId);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    void RequestResumeServerRpc(ServerRpcParams rpcParams = default)
+    {
+        if (!IsGamePaused.Value)
+        {
+            Debug.Log("Game is not paused");
+            return;
+        }
+
+        ulong requesterId = rpcParams.Receive.SenderClientId;
+        ulong pauseRequesterId = PauseRequesterClientId.Value;
+
+        // Allow server or the pausing player to resume
+        if (IsServer || requesterId == pauseRequesterId)
+        {
+            Debug.Log($"Resuming game. Requested by: {requesterId}");
+
+            IsGamePaused.Value = false;
+            PauseRequesterClientId.Value = 0;
+
+            // Notify all clients about resume
+            PauseStateChangedClientRpc(false, 0);
+        }
+        else
+        {
+            Debug.Log($"Player {requesterId} cannot resume - only player {pauseRequesterId} can");
+        }
+    }
+
+    [ClientRpc]
+    void PauseStateChangedClientRpc(bool isPaused, ulong requesterId)
+    {
+        if (isPaused)
+        {
+            isLocallyPaused = true;
+            timerRunning = false;
+
+            if (pausePanel != null)
+                pausePanel.SetActive(true);
+
+           /* if (pauseStatusText != null)
+            {
+                int pausingPlayer = (requesterId == 0) ? 1 : 2;
+                ulong localId = NetworkManager.Singleton.LocalClientId;
+
+                if (localId == requesterId)
+                    pauseStatusText.text = "Game Paused\nPress Resume to continue";
+                else
+                    pauseStatusText.text = $"Game Paused by Player {pausingPlayer}\nWaiting for them to resume...";
+            }*/
+
+            SetGameBoardInteractable(false);
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            isLocallyPaused = false;
+            timerRunning = true;
+
+            if (pausePanel != null)
+                pausePanel.SetActive(false);
+
+            SetGameBoardInteractable(true);
+            Time.timeScale = 1f;
+        }
+    }
+
+    // Helper methods for controlling interactability
+    void SetGameBoardInteractable(bool enabled)
+    {
+        // Disable/enable game slots
+        foreach (var slot in allSlots)
+        {
+            if (slot != null)
+            {
+                var btn = slot.GetComponent<UnityEngine.UI.Button>();
+                if (btn != null)
+                    btn.interactable = enabled && !IsGamePaused.Value;
+            }
+        }
+
+        // Handle rewind button
+        if (rewindButton != null)
+        {
+            if (IsGamePaused.Value)
+                rewindButton.interactable = false;
+            else
+                rewindButton.interactable = enabled && IsLocalPlayerTurn() && !GameEnded.Value;
+        }
+    }
 
 
     //Helper Functions
