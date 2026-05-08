@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
@@ -23,7 +23,6 @@ public class UIManager : NetworkBehaviour
     public GameObject hostingPanel;
     public GameObject joiningPanel;
     public GameObject errorPanel;
-    public GameObject profilePanel;
     public TextMeshProUGUI errorText;
 
     [Header("Hosting Panel References")]
