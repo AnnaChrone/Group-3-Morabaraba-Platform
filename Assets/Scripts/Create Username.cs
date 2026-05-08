@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Unity.VisualScripting;
 using Unity.Services.Lobbies.Models;
+using System.Linq.Expressions;
 
 public class CreateUsername : MonoBehaviour
 {
@@ -74,6 +75,77 @@ public class CreateUsername : MonoBehaviour
             return;
         }
 
+        //Validate password
+        bool hasUpper = false;
+        bool hasLower = false;
+        bool hasNum = false;
+        bool hasSpecial = false;
+
+        if (string.IsNullOrEmpty(password))
+        {
+            if (statusText != null) statusText.text = "Please enter a password";
+            return;
+        }
+
+        if(password.Length < 8)
+        {
+            if (statusText != null) statusText.text = "Password must be 8 characters or more";
+            return;
+        }
+
+        if (password.Length > 20)
+        {
+            if (statusText != null) statusText.text = "Password must be under 20 characters";
+            return;
+        }
+
+        foreach (char c in password)
+        {
+            if (char.IsLower(c))
+            {
+                hasLower = true;
+            }
+
+            if (char.IsUpper(c))
+            {
+                hasUpper = true;
+            }
+
+            if (char.IsDigit(c))
+            {
+                hasNum = true;
+            }
+
+            if (!char.IsLetterOrDigit(c))
+            {
+                hasSpecial = true;
+            }
+        }
+
+        if (!hasLower)
+        {
+            statusText.text = "Password needs a lowercase letter";
+            return;
+        }
+
+        if (!hasUpper)
+        {
+            statusText.text = "Password needs an uppercase letter";
+            return;
+        }
+
+        if(!hasNum)
+        {
+            statusText.text = "Password needs a number";
+            return;
+        }
+
+        if (!hasSpecial)
+        {
+            statusText.text = "Password needs a special character";
+            return;
+        }
+
         isSigningIn = true;
         createAccount.interactable = false;
         statusText.text = "Creating account...";
@@ -84,6 +156,7 @@ public class CreateUsername : MonoBehaviour
 
         Debug.Log("Account created");
         PlayerData.Instance.SetUsername(username);
+        PlayerData.Instance.SetPassword(password);
 
         await SaveCloudData(username, password); // optional
 
@@ -136,6 +209,7 @@ public class CreateUsername : MonoBehaviour
 
         Debug.Log("Signed in as: " + AuthenticationService.Instance.PlayerId);
         PlayerData.Instance.SetUsername(username);
+        PlayerData.Instance.SetPassword(password);
 
         await LoadCloudData(); // load wins/losses
 
