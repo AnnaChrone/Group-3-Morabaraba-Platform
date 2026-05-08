@@ -886,7 +886,10 @@ public class UIManager : NetworkBehaviour
         PlayerReturnedToLobby(clientId);
     }
 
-   
+   public List<string> GetPlayerDisplayNames()
+    {
+        return new List<string>(playersInLobbyDisplay);
+    }
 }
 
 public enum PlayerSceneState { InLobby, LoadingGame, InGame, ReturningToLobby }

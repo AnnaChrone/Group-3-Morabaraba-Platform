@@ -8281,6 +8281,8 @@ MonoBehaviour:
   forfeitButton: {fileID: 1597908056}
   rulesButton: {fileID: 833321172}
   closeGameButton: {fileID: 1500033563}
+  user1Text: {fileID: 168170006}
+  user2Text: {fileID: 1418969614}
 --- !u!114 &343618803
 MonoBehaviour:
   m_ObjectHideFlags: 0

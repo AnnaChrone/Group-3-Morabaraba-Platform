@@ -192,8 +192,15 @@ public class GameController : NetworkBehaviour
     [Header("Stats tracking")]
     private float gameStartTime;
 
+    [Header("Player Usernames")]
+    public TextMeshProUGUI user1Text;
+    public TextMeshProUGUI user2Text;
+
     //rewind functionality
     private List<GameSnapshot> gameHistory = new List<GameSnapshot>();
+
+    
+
     void Awake()
     {
         if (loadingPanel != null)
@@ -410,8 +417,19 @@ public class GameController : NetworkBehaviour
         Debug.Log($"NetworkManager active: {NetworkManager.Singleton != null}");
         Debug.Log($"Current GameSettings - Type: {GameSettings.GameType}, Time: {GameSettings.GameTime}");
         gameType = GameSettings.GameType;   
+        Invoke(nameof(SetNames), 1f);
     }
 
+    void SetNames()
+    {
+        var names = UIManager.Instance.GetPlayerDisplayNames();
+
+        if (names.Count > 0)
+            user1Text.text = names[0];
+
+        if (names.Count > 1)
+            user2Text.text = names[1];
+    }
     void InitializeGameState()
     {
         if (totalSlots == 0)
