@@ -5,6 +5,7 @@ using Unity.Collections;
 using Unity.Netcode;
 using Unity.Services.CloudSave.Models.Data.Player;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [System.Serializable]
@@ -96,6 +97,16 @@ public class GameController : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+    [Header("Game Type Configuration")]
+    public GameTypeData morabarabaData;
+    public GameTypeData sixMensMorrisData;
+    private GameTypeData currentGameType;
+    private Dictionary<int, int[]> adjacency;
+    private List<int[]> mills;
+    private int totalSlots;
+    private int piecesPerPlayer;
+    private int totalPlacements;
+
     [Header("Loading UI")]
     public GameObject loadingPanel;
     public TextMeshProUGUI loadingText;
@@ -158,29 +169,6 @@ public class GameController : NetworkBehaviour
 
     //rewind functionality
     private List<GameSnapshot> gameHistory = new List<GameSnapshot>();
-
-    // Adjacency and mills data - Morabaraba specific
-    private readonly Dictionary<int, int[]> adjacency = new Dictionary<int, int[]>()
-    {
-        {1, new int[] {2, 8, 9}}, {2, new int[] {1,3, 10}}, {3, new int[] {2,4, 11}},
-        {4, new int[] {3,5, 12}}, {5, new int[] {4,6, 13}}, {6, new int[] {5,7, 14}},
-        {7, new int[] {6,8, 15}}, {8, new int[] {7,1, 16}}, {9, new int[] {1,10, 16,17}},
-        {10, new int[] {2,9, 11,18}}, {11, new int[] {3,10,12, 19}}, {12, new int[] {4,11,13,20}},
-        {13, new int[] {5,12,14,21}}, {14, new int[] {6,13,15,22}}, {15, new int[] {7,14,16,23}},
-        {16, new int[] {8,9,15,24}}, {17, new int[] {9,18,24}}, {18, new int[] {10,17,19}},
-        {19, new int[] {11,18,20}}, {20, new int[] {12,19,21}}, {21, new int[] {13,20,22}},
-        {22, new int[] {14,21,23}}, {23, new int[] {15,22,24}}, {24, new int[] {16,17,23}}
-    };
-
-    private readonly int[][] mills = new int[][]
-    {
-        new int[] {1,2,3}, new int[] {3,4,5}, new int[] {5,6,7}, new int[] {7,8,1},
-        new int[] {9,10,11}, new int[] {11,12,13}, new int[] {13,14,15}, new int[] {15,16,9},
-        new int[] {17,18,19}, new int[] {19,20,21}, new int[] {21,22,23}, new int[] {23,24,17},
-        new int[] {1,9,17}, new int[] {2,10,18}, new int[] {3,11,19}, new int[] {4,12,20},
-        new int[] {5,13,21}, new int[] {6,14,22}, new int[] {7,15,23}, new int[] {8,16,24}
-    };
-
     void Awake()
     {
         if (loadingPanel != null)
@@ -188,6 +176,8 @@ public class GameController : NetworkBehaviour
 
         if (loadingText != null)
             loadingText.text = "Initializing Network...";
+
+        LoadGameTypeData();
     }
     void Update()
     {
@@ -259,6 +249,10 @@ public class GameController : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        Debug.Log($"=== OnNetworkSpawn START ===");
+        Debug.Log($"totalSlots: {totalSlots}, piecesPerPlayer: {piecesPerPlayer}");
+        Debug.Log($"adjacency null? {adjacency == null}, mills null? {mills == null}");
+
         // Read current settings
         string gameType = GameSettings.GameType;
         string gameTimeSetting = GameSettings.GameTime;
@@ -296,6 +290,10 @@ public class GameController : NetworkBehaviour
         UpdateTurnIndicator();
 
         StartCoroutine(FinishLoading());
+    }
+    void LoadGameTypeData()
+    {
+        HardcodeGameData(); // Just uses hardcoded data directly
     }
 
     void OnTotalGameTimeChanged(float oldVal, float newVal)
@@ -359,21 +357,27 @@ public class GameController : NetworkBehaviour
 
     void InitializeGameState()
     {
+        if (totalSlots == 0)
+        {
+            Debug.LogError("totalSlots is 0! Loading default values.");
+            totalSlots = 24;
+            piecesPerPlayer = 12;
+        }
+
         CurrentPlayer.Value = 1;
         PlacementCounter.Value = 0;
-
         Player1PiecesOnBoard.Value = 0;
         Player2PiecesOnBoard.Value = 0;
         CurrentPhase.Value = GamePhase.Placing;
         GameEnded.Value = false;
-
-        // Initialize stats tracking
         gameStartTime = Time.time;
         TotalGameTime.Value = 0;
 
         var states = new List<string>();
-        for (int i = 1; i <= 24; i++) states.Add($"{i}:0");
+        for (int i = 1; i <= totalSlots; i++) states.Add($"{i}:0");
         SlotStates.Value = string.Join(",", states);
+
+        Debug.Log($"Game state initialized with {totalSlots} slots, {totalPlacements} total placements needed");
     }
 
     void InitializeSlotStates()
@@ -499,7 +503,7 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-        if (PlacementCounter.Value >= 24)
+        if (PlacementCounter.Value >= totalPlacements)
         {
             CurrentPhase.Value = GamePhase.Moving;
         }
@@ -603,8 +607,7 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-        CurrentPhase.Value = (PlacementCounter.Value >= 24) ? GamePhase.Moving : GamePhase.Placing;
-        UpdatePiecesClientRpc();
+        CurrentPhase.Value = (PlacementCounter.Value >= totalPlacements) ? GamePhase.Moving : GamePhase.Placing; UpdatePiecesClientRpc();
         EndTurn();
     }
 
@@ -683,16 +686,13 @@ public class GameController : NetworkBehaviour
     }
     void UpdatePiecesToPlaceUI()
     {
-        // Pieces left to place
         int player1Placed = (PlacementCounter.Value + 1) / 2;
         int player2Placed = PlacementCounter.Value / 2;
-
-        int player1Left = Mathf.Max(0, 12 - player1Placed);
-        int player2Left = Mathf.Max(0, 12 - player2Placed);
+        int player1Left = Mathf.Max(0, piecesPerPlayer - player1Placed);
+        int player2Left = Mathf.Max(0, piecesPerPlayer - player2Placed);
 
         Player1Pieces.text = new string('●', player1Left);
         Player2Pieces.text = new string('●', player2Left);
-
         Player1Captures.text = new string('●', Player1CapturesCount.Value);
         Player2Captures.text = new string('●', Player2CapturesCount.Value);
     }
@@ -766,9 +766,18 @@ public class GameController : NetworkBehaviour
 
     void ApplySlotStatesToVisuals()
     {
+        // Add null check for allSlots
+        if (allSlots == null || allSlots.Length == 0)
+        {
+            Debug.LogError("allSlots array is not assigned or empty! Please assign all slots in the Inspector.");
+            return;
+        }
+
         var states = ParseSlotStates();
         foreach (var slot in allSlots)
         {
+            if (slot == null) continue;
+
             if (states.TryGetValue(slot.slotNumber, out int owner))
             {
                 if (owner == 0)
@@ -784,18 +793,48 @@ public class GameController : NetworkBehaviour
 
     bool CheckMill(int slotNumber, int player)
     {
+        Debug.Log($"=== CHECK MILL CALLED ===");
+        Debug.Log($"Slot: {slotNumber}, Player: {player}");
+        Debug.Log($"Mills count: {mills?.Count ?? 0}");
+
+        if (mills == null || mills.Count == 0)
+        {
+            Debug.LogError($"Mills is null or empty! mills null? {mills == null}, Count: {mills?.Count ?? 0}");
+            return false;
+        }
+
         foreach (var mill in mills)
         {
+            if (mill == null)
+            {
+                Debug.LogWarning("Mill is null!");
+                continue;
+            }
+
+            Debug.Log($"Checking mill: [{string.Join(", ", mill)}]");
+
             if (!mill.Contains(slotNumber)) continue;
+
+            Debug.Log($"Slot {slotNumber} found in mill [{string.Join(", ", mill)}]");
 
             int count = 0;
             foreach (int s in mill)
-                if (GetSlotOwner(s) == player) count++;
-
-            if (count == 3)
             {
+                int owner = GetSlotOwner(s);
+                Debug.Log($"  Slot {s} owner: {owner}");
+                if (owner == player) count++;
+            }
+
+            Debug.Log($"Count: {count}/{mill.Length}");
+
+            if (count == mill.Length)
+            {
+                Debug.Log($" MILL FORMED! Player {player} at slot {slotNumber}");
                 foreach (int s in mill)
-                    GetSlotByNumber(s).SetMillStatus(true);
+                {
+                    var slot = GetSlotByNumber(s);
+                    if (slot != null) slot.SetMillStatus(true);
+                }
                 PlaySoundClientRpc("FormMill");
                 return true;
             }
@@ -828,20 +867,39 @@ public class GameController : NetworkBehaviour
 
     void UpdateAllMills()
     {
-        foreach (var slot in allSlots) slot.SetMillStatus(false);
+        if (allSlots == null) return;
+
+        foreach (var slot in allSlots)
+        {
+            if (slot != null) slot.SetMillStatus(false);
+        }
 
         foreach (var mill in mills)
         {
             int owner = GetSlotOwner(mill[0]);
-            if (owner != 0 &&
-                GetSlotOwner(mill[1]) == owner &&
-                GetSlotOwner(mill[2]) == owner)
+            if (owner != 0)
             {
+                bool isMill = true;
                 foreach (int s in mill)
                 {
-                    var slot = GetSlotByNumber(s);
-                    slot.SetMillStatus(true);
-                    slot.slotUI.HighlightMill(owner);
+                    if (GetSlotOwner(s) != owner)
+                    {
+                        isMill = false;
+                        break;
+                    }
+                }
+                if (isMill)
+                {
+                    foreach (int s in mill)
+                    {
+                        var slot = GetSlotByNumber(s);
+                        if (slot != null)
+                        {
+                            slot.SetMillStatus(true);
+                            if (slot.slotUI != null)
+                                slot.slotUI.HighlightMill(owner);
+                        }
+                    }
                 }
             }
         }
@@ -849,9 +907,11 @@ public class GameController : NetworkBehaviour
 
     bool OpponentHasFreePiece(int opponent)
     {
+        if (allSlots == null) return false;
+
         foreach (var slot in allSlots)
         {
-            if (GetSlotOwner(slot.slotNumber) == opponent && !slot.isInMill)
+            if (slot != null && GetSlotOwner(slot.slotNumber) == opponent && !slot.isInMill)
                 return true;
         }
         return false;
@@ -862,33 +922,41 @@ public class GameController : NetworkBehaviour
         int opponent = (CurrentPlayer.Value == 1) ? 2 : 1;
         int opponentPieces = (opponent == 1) ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value;
 
-        if (PlacementCounter.Value < 24) return false;
+        if (PlacementCounter.Value < totalPlacements) return false;
+
         if (opponentPieces <= 2)
         {
-            Debug.Log("Opponent has less than 2 pieces left");
-            WinReason.text = "Your opponent has 2 of less pieces left!";
+            WinReason.text = "Your opponent has 2 or less pieces left!";
             LossReason.text = "You have 2 or less pieces left!";
             return true;
         }
 
         bool canFly = opponentPieces <= 3;
-        foreach (var slot in allSlots)
-        {
-            if (GetSlotOwner(slot.slotNumber) != opponent) continue;
 
-            if (canFly)
+        if (allSlots != null)
+        {
+            foreach (var slot in allSlots)
             {
-                if (allSlots.Any(s => GetSlotOwner(s.slotNumber) == 0))
-                    return false;
-            }
-            else
-            {
-                foreach (int adj in adjacency[slot.slotNumber])
-                    if (GetSlotOwner(adj) == 0) return false;
+                if (slot == null) continue;
+
+                if (GetSlotOwner(slot.slotNumber) != opponent) continue;
+
+                if (canFly)
+                {
+                    if (allSlots.Any(s => s != null && GetSlotOwner(s.slotNumber) == 0))
+                        return false;
+                }
+                else
+                {
+                    if (adjacency.ContainsKey(slot.slotNumber))
+                    {
+                        foreach (int adj in adjacency[slot.slotNumber])
+                            if (GetSlotOwner(adj) == 0) return false;
+                    }
+                }
             }
         }
 
-        Debug.Log("Your opponent has no more valid moves");
         WinReason.text = "Your opponent has no more valid moves!";
         LossReason.text = "You have no more valid moves!";
         return true;
@@ -935,9 +1003,20 @@ public class GameController : NetworkBehaviour
 
     System.Collections.IEnumerator ReturnToLobbyRoutine()
     {
+        string gameType = GameSettings.GameType;
         UIManager.Instance.NotifyReturnedToLobby();
-        yield return UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("GameScene");
+        if  (gameType == "Morabaraba")
+        {
+            yield return UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("GameScene");
+        }
+        else
+        {
+            yield return UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("SixMensMorris");
 
+        }
+
+
+        UIManager.Instance.NotifyReturnedToLobby();
 
     }
 
@@ -1261,6 +1340,64 @@ public class GameController : NetworkBehaviour
     SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);
     bool IsAdjacent(SlotID from, SlotID to) => adjacency[from.slotNumber].Contains(to.slotNumber);
 
+    void HardcodeGameData()
+    {
+        string gameType = GameSettings.GameType;
+
+        if (gameType == "Morabaraba")
+        {
+            totalSlots = 24;
+            piecesPerPlayer = 12;
+            totalPlacements = 24; // 12 + 12 = 24 placements total
+
+            adjacency = new Dictionary<int, int[]>
+        {
+            {1, new int[] {2, 8, 9}}, {2, new int[] {1, 3, 10}}, {3, new int[] {2, 4, 11}},
+            {4, new int[] {3, 5, 12}}, {5, new int[] {4, 6, 13}}, {6, new int[] {5, 7, 14}},
+            {7, new int[] {6, 8, 15}}, {8, new int[] {7, 1, 16}}, {9, new int[] {1, 10, 16, 17}},
+            {10, new int[] {2, 9, 11, 18}}, {11, new int[] {3, 10, 12, 19}}, {12, new int[] {4, 11, 13, 20}},
+            {13, new int[] {5, 12, 14, 21}}, {14, new int[] {6, 13, 15, 22}}, {15, new int[] {7, 14, 16, 23}},
+            {16, new int[] {8, 9, 15, 24}}, {17, new int[] {9, 18, 24}}, {18, new int[] {10, 17, 19}},
+            {19, new int[] {11, 18, 20}}, {20, new int[] {12, 19, 21}}, {21, new int[] {13, 20, 22}},
+            {22, new int[] {14, 21, 23}}, {23, new int[] {15, 22, 24}}, {24, new int[] {16, 17, 23}}
+        };
+
+            mills = new List<int[]>
+        {
+            new int[] {1,2,3}, new int[] {3,4,5}, new int[] {5,6,7}, new int[] {7,8,1},
+            new int[] {9,10,11}, new int[] {11,12,13}, new int[] {13,14,15}, new int[] {15,16,9},
+            new int[] {17,18,19}, new int[] {19,20,21}, new int[] {21,22,23}, new int[] {23,24,17},
+            new int[] {1,9,17}, new int[] {2,10,18}, new int[] {3,11,19}, new int[] {4,12,20},
+            new int[] {5,13,21}, new int[] {6,14,22}, new int[] {7,15,23}, new int[] {8,16,24}
+        };
+        }
+        else if (gameType == "6 Men's Morris")
+        {
+            totalSlots = 16;
+            piecesPerPlayer = 6;
+            totalPlacements = 12; // 6 + 6 = 12 placements total
+
+            adjacency = new Dictionary<int, int[]>
+        {
+            {1, new int[] {2, 8, 9}}, {2, new int[] {1, 3, 10}}, {3, new int[] {2, 4, 11}},
+            {4, new int[] {3, 5, 12}}, {5, new int[] {4, 6, 13}}, {6, new int[] {5, 7, 14}},
+            {7, new int[] {6, 8, 15}}, {8, new int[] {7, 1, 16}}, {9, new int[] {1, 10, 16}},
+            {10, new int[] {2, 9, 11}}, {11, new int[] {3, 10, 12}}, {12, new int[] {4, 11, 13}},
+            {13, new int[] {5, 12, 14}}, {14, new int[] {6, 13, 15}}, {15, new int[] {7, 14, 16}},
+            {16, new int[] {8, 15, 9}}
+        };
+
+            mills = new List<int[]>
+        {
+            new int[] {1,2,3}, new int[] {3,4,5}, new int[] {5,6,7}, new int[] {7,8,1},
+            new int[] {9,10,11}, new int[] {11,12,13}, new int[] {13,14,15}, new int[] {15,16,9},
+            new int[] {1,9,16}, new int[] {2,10,15}, new int[] {3,11,14}, new int[] {4,12,13},
+            new int[] {5,13,12}, new int[] {6,14,11}, new int[] {7,15,10}, new int[] {8,16,9}
+        };
+        }
+
+        Debug.Log($"Game data loaded: {totalSlots} slots, {piecesPerPlayer} pieces per player, {totalPlacements} total placements, {mills.Count} mills");
+    }
     void GameOver(int winner) => ServerGameOver(CurrentPlayer.Value,WinReason.text,LossReason.text);
 }
 

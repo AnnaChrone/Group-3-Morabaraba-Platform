@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfa323abf0b886e4280aa96e9b7cb381, type: 3}
+  m_Name: Morabaraba
+  m_EditorClassIdentifier: Assembly-CSharp::GameTypeData
+  gameTypeName: Morabaraba
+  totalSlots: 24
+  piecesPerPlayer: 12
+  adjacencyData: {fileID: 4900000, guid: a074bb3ce8f255a48b6768a2aa6bb951, type: 3}
+  millData: {fileID: 4900000, guid: d35bc0f4d57f22a4a89137cd59b2ad42, type: 3}
