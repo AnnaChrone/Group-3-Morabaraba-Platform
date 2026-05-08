@@ -256,6 +256,7 @@ public class CreateUsername : MonoBehaviour
             {"password", password},
             {"wins", PlayerData.Instance.wins},
             {"losses", PlayerData.Instance.losses},
+            {"draw", PlayerData.Instance.draw},
             { "lastLogin", System.DateTime.UtcNow.ToString() }
             
         };
@@ -267,10 +268,11 @@ public class CreateUsername : MonoBehaviour
     async Task LoadCloudData() //Move this to the sign in button
     {
         
-        var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "wins", "losses","username","password" });
+        var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "wins", "losses","username","password","draw" });
 
         PlayerData.Instance.setWins(data.ContainsKey("wins") ? float.Parse(data["wins"].ToString()) : 0);
         PlayerData.Instance.setLoss(data.ContainsKey("losses") ? float.Parse(data["losses"].ToString()) : 0); // Sets to the cloud
+        PlayerData.Instance.setDraw(data.ContainsKey("draw") ? float.Parse(data["draw"].ToString()) : 0);
 
         string username = data.ContainsKey("username") ? data["username"].ToString() : "";
         string password = data.ContainsKey("password") ? data["password"].ToString() : "";

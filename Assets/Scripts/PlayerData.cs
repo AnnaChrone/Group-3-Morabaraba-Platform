@@ -11,6 +11,7 @@ public class PlayerData : MonoBehaviour
     public string Password{get; private set;}
     public float wins {get; private set;}
     public float losses {get; private set;}
+    public float draw {get; private set;}
     public CreateUsername createUsername;
 
     private void Awake()
@@ -68,10 +69,22 @@ public class PlayerData : MonoBehaviour
         losses = lossNum;
     }
 
-    public async void AddLoss()
+    public async Task AddLoss()
     {
         losses++;
         await createUsername.SaveCloudData(Username, Password);
         Debug.Log("Losses for "+ Username + ": " +losses);
+    }
+
+    public void setDraw(float drawNum)
+    {
+        draw = drawNum;
+    }
+
+    public async Task AddDraw()
+    {
+        draw++;
+        await createUsername.SaveCloudData(Username, Password);
+        Debug.Log("Draws for "+ Username + ": " +draw);
     }
 }
