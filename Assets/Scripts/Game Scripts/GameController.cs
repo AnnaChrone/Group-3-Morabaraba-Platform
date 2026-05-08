@@ -1040,6 +1040,13 @@ public class GameController : NetworkBehaviour
 
         SubmitForfeitServerRpc();
     }
+    public void PlayerForfeit()
+    {
+        if (!IsSpawned || GameEnded.Value)
+            return;
+
+        SubmitForfeitServerRpc();
+    }
 
     [ServerRpc(RequireOwnership = false)]
     void SubmitForfeitServerRpc(ServerRpcParams rpcParams = default)
