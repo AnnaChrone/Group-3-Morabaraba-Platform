@@ -743,7 +743,7 @@ public class GameController : NetworkBehaviour
             LossGameStats.text = $"Time taken: {timeTaken}\nPieces captured: {piecesCaptured}";
 
             LossScreen.SetActive(true);
-            AudioController.Instance?.PlayAudio("Lose");
+            AudioController.Instance?.PlayAudio("Loss");
         }
     }
     void UpdatePiecesToPlaceUI()
