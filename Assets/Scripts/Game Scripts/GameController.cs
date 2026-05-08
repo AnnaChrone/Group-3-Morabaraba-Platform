@@ -146,6 +146,7 @@ public class GameController : NetworkBehaviour
     [Header("Rewind UI")]
     public TextMeshProUGUI RewindText;
     public Button rewindButton;
+    public GameObject rewindEffectPanel;
 
     [Header("Player piece depiction")]
     public TextMeshProUGUI Player1Pieces;
@@ -1230,8 +1231,7 @@ public class GameController : NetworkBehaviour
     {
         ulong senderClientId = rpcParams.Receive.SenderClientId;
 
-        int requestingPlayer =
-            senderClientId == 0 ? 1 : 2;
+        int requestingPlayer = senderClientId == 0 ? 1 : 2;
 
         // Only current player can rewind
         if (CurrentPlayer.Value != requestingPlayer)
@@ -1248,7 +1248,6 @@ public class GameController : NetworkBehaviour
                 Debug.Log("Player 1 has no rewinds left.");
                 return;
             }
-
             Player1Rewinds.Value--;
         }
         else
@@ -1258,7 +1257,6 @@ public class GameController : NetworkBehaviour
                 Debug.Log("Player 2 has no rewinds left.");
                 return;
             }
-
             Player2Rewinds.Value--;
         }
 
@@ -1273,7 +1271,7 @@ public class GameController : NetworkBehaviour
         gameHistory.RemoveAt(gameHistory.Count - 1);
 
         // Restore previous state
-        GameSnapshot snapshot =  gameHistory[gameHistory.Count - 1];
+        GameSnapshot snapshot = gameHistory[gameHistory.Count - 1];
 
         // Remove restored snapshot
         gameHistory.RemoveAt(gameHistory.Count - 1);
@@ -1282,7 +1280,58 @@ public class GameController : NetworkBehaviour
 
         Debug.Log($"Player {requestingPlayer} used rewind.");
 
+        // Play sound for all players
         PlaySoundClientRpc("Rewind");
+
+        // Show rewind effect for all players
+        ShowRewindEffectClientRpc();
+    }
+
+    [ClientRpc]
+    public void ShowRewindEffectClientRpc()
+    {
+        if (rewindEffectPanel != null)
+        {
+            // Stop any ongoing coroutine on this panel
+            StopCoroutine("FadeOutRewindPanel");
+            StartCoroutine(FadeOutRewindPanel());
+        }
+    }
+
+
+    private System.Collections.IEnumerator FadeOutRewindPanel()
+    {
+        // Activate the panel
+        rewindEffectPanel.SetActive(true);
+
+        // Set initial alpha (if using CanvasGroup)
+        CanvasGroup canvasGroup = rewindEffectPanel.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            // If no CanvasGroup, add one
+            canvasGroup = rewindEffectPanel.AddComponent<CanvasGroup>();
+        }
+
+        canvasGroup.alpha = 1f;
+
+
+        // Wait for 1 second
+        yield return new WaitForSecondsRealtime(1f);
+
+        // Fade out over 0.5 seconds
+        float fadeDuration = 0.5f;
+        float elapsedTime = 0f;
+
+        while (elapsedTime < fadeDuration)
+        {
+            elapsedTime += Time.unscaledDeltaTime;
+            canvasGroup.alpha = Mathf.Lerp(1f, 0f, elapsedTime / fadeDuration);
+            yield return null;
+        }
+
+        // Deactivate the panel
+        rewindEffectPanel.SetActive(false);
+        canvasGroup.alpha = 1f; // Reset alpha for next time
     }
 
     //Timer Functions
@@ -1591,17 +1640,6 @@ public class GameController : NetworkBehaviour
 
             if (pausePanel != null)
                 pausePanel.SetActive(true);
-
-           /* if (pauseStatusText != null)
-            {
-                int pausingPlayer = (requesterId == 0) ? 1 : 2;
-                ulong localId = NetworkManager.Singleton.LocalClientId;
-
-                if (localId == requesterId)
-                    pauseStatusText.text = "Game Paused\nPress Resume to continue";
-                else
-                    pauseStatusText.text = $"Game Paused by Player {pausingPlayer}\nWaiting for them to resume...";
-            }*/
 
             SetGameBoardInteractable(false);
             Time.timeScale = 0f;
