@@ -1155,7 +1155,17 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-        CurrentTurnIndicator.text = $"Player {CurrentPlayer.Value} Turn - {CurrentPhase.Value}";
+        //CurrentTurnIndicator.text = $"Player {CurrentPlayer.Value} Turn - {CurrentPhase.Value}";
+        var names = UIManager.Instance.GetPlayerDisplayNames();
+        if (CurrentPlayer.Value == 1)
+        {
+            CurrentTurnIndicator.text = $"{names[0]}'s Turn - {CurrentPhase.Value}";
+        }
+        else if(CurrentPlayer.Value == 2)
+        {
+            CurrentTurnIndicator.text = $"{names[1]}'s Turn - {CurrentPhase.Value}";
+        }
+        
         CurrentTurnIndicator.color = CurrentPlayer.Value == 1 ? Color.green : Color.red;
     }
 
