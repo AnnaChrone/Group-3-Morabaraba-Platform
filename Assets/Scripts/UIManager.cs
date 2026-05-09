@@ -44,7 +44,7 @@ public class UIManager : NetworkBehaviour
     // Lobby Data
     private string lobbyCode;
     private string gameType = "Morabaraba";
-    private string gameTime = "10:00";
+    private string gameTime = "10:00 game";
     private Dictionary<ulong, PlayerSceneState> playerSceneStates
     = new Dictionary<ulong, PlayerSceneState>();
 

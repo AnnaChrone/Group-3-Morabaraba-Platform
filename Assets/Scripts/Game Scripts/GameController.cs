@@ -898,19 +898,19 @@ public class GameController : NetworkBehaviour
         int player1Left = Mathf.Max(0, piecesPerPlayer - player1Placed);
         int player2Left = Mathf.Max(0, piecesPerPlayer - player2Placed);
 
-        Player1Pieces.text = new string('●', player1Left);
-        Player2Pieces.text = new string('●', player2Left);
-        Player1Captures.text = new string('●', Player1CapturesCount.Value);
-        Player2Captures.text = new string('●', Player2CapturesCount.Value);
+        Player1Pieces.text = new string('•', player1Left);
+        Player2Pieces.text = new string('•', player2Left);
+        Player1Captures.text = new string('•', Player1CapturesCount.Value);
+        Player2Captures.text = new string('•', Player2CapturesCount.Value);
     }
 
     [ClientRpc]
     void UpdateCaptureUIClientRpc(int player, int newValue)
     {
         if (player == 1)
-            Player1Captures.text = new string('●', newValue);
+            Player1Captures.text = new string('•', newValue);
         else
-            Player2Captures.text = new string('●', newValue);
+            Player2Captures.text = new string('•', newValue);
     }
 
     [ClientRpc]
