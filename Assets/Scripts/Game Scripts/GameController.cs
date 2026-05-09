@@ -131,6 +131,7 @@ public class GameController : NetworkBehaviour
     public SlotID[] allSlots;
     public SlotUI[] slotUIs;
     public GameObject Rules;
+    public GameObject millErrorPanel;
     private bool open =false;
 
     [Header("Win and Loss Screens")]
@@ -258,18 +259,20 @@ public class GameController : NetworkBehaviour
             }
             else if (timerMode == TimerMode.TurnTimer)
             {
-                turnTimeRemaining -= dt;
-
-                if (turnTimeRemaining <= 0f)
+                if (CurrentPhase.Value != GamePhase.Capturing) //pauses turn timer if capturing
                 {
-                    turnTimeRemaining = 0f;
-                    // Time's up - end turn
-                    EndTurn();
-                    ResetTurnTimer();
+                    turnTimeRemaining -= dt;
 
-                    // Notify clients of timer reset
-                    UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
-                    return;
+                    if (turnTimeRemaining <= 0f)
+                    {
+                        turnTimeRemaining = 0f;
+
+                        EndTurn();
+                        ResetTurnTimer();
+
+                        UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
+                        return;
+                    }
                 }
             }
 
@@ -605,6 +608,7 @@ public class GameController : NetworkBehaviour
 
         if (!IsValidMove(fromSlot, slot, currentPlayer))
         {
+            fromSlot.slotUI.SetPlayerColor(currentPlayer);
             SelectedSlot.Value = 0;
             PlaySoundClientRpc("Invalid");
             return;
@@ -657,7 +661,13 @@ public class GameController : NetworkBehaviour
         if (GetSlotOwner(slot.slotNumber) != opponent) return;
 
         if (slot.isInMill && OpponentHasFreePiece(opponent))
+        {
+            PlaySoundClientRpc("Invalid");
+            //DISPLAY MILL ERROR HERE
+            ShowEffectClientRpc("Mill");
             return;
+        }
+
         SaveSnapshot(); //stores snapshot per turn
         SetSlotOwner(slot.slotNumber, 0);
 
@@ -1165,8 +1175,8 @@ public class GameController : NetworkBehaviour
         {
             CurrentTurnIndicator.text = $"{names[1]}'s Turn - {CurrentPhase.Value}";
         }
-        
-        CurrentTurnIndicator.color = CurrentPlayer.Value == 1 ? Color.green : Color.red;
+
+        CurrentTurnIndicator.color = CurrentPlayer.Value == 1? new Color32(0x55, 0x6B, 0x2F, 255) : new Color32(0x99, 0x00, 0x00, 255);
     }
 
     void OnPlacementCounterChanged(int oldVal, int newVal)
@@ -1313,6 +1323,8 @@ public class GameController : NetworkBehaviour
         gameHistory.RemoveAt(gameHistory.Count - 1);
 
         LoadSnapshot(snapshot);
+        CurrentPlayer.Value = requestingPlayer;
+        UpdateTurnIndicator();
 
         Debug.Log($"Player {requestingPlayer} used rewind.");
 
@@ -1320,32 +1332,37 @@ public class GameController : NetworkBehaviour
         PlaySoundClientRpc("Rewind");
 
         // Show rewind effect for all players
-        ShowRewindEffectClientRpc();
+        ShowEffectClientRpc("Rewind");
     }
 
     [ClientRpc]
-    public void ShowRewindEffectClientRpc()
+    public void ShowEffectClientRpc(string showTarget)
     {
-        if (rewindEffectPanel != null)
+        if (showTarget == "Rewind" && rewindEffectPanel != null)
         {
             // Stop any ongoing coroutine on this panel
-            StopCoroutine("FadeOutRewindPanel");
-            StartCoroutine(FadeOutRewindPanel());
+            StopCoroutine("FadeOutPanel");
+            StartCoroutine(FadeOutPanel(rewindEffectPanel));
+        } else if (showTarget == "Mill" && rewindEffectPanel != null)
+        {
+            // Stop any ongoing coroutine on this panel
+            StopCoroutine("FadeOutPanel");
+            StartCoroutine(FadeOutPanel(millErrorPanel));
         }
     }
 
 
-    private System.Collections.IEnumerator FadeOutRewindPanel()
+    private System.Collections.IEnumerator FadeOutPanel(GameObject FadeTarget)
     {
         // Activate the panel
-        rewindEffectPanel.SetActive(true);
+        FadeTarget.SetActive(true);
 
         // Set initial alpha (if using CanvasGroup)
-        CanvasGroup canvasGroup = rewindEffectPanel.GetComponent<CanvasGroup>();
+        CanvasGroup canvasGroup = FadeTarget.GetComponent<CanvasGroup>();
         if (canvasGroup == null)
         {
             // If no CanvasGroup, add one
-            canvasGroup = rewindEffectPanel.AddComponent<CanvasGroup>();
+            canvasGroup = FadeTarget.AddComponent<CanvasGroup>();
         }
 
         canvasGroup.alpha = 1f;
@@ -1366,7 +1383,7 @@ public class GameController : NetworkBehaviour
         }
 
         // Deactivate the panel
-        rewindEffectPanel.SetActive(false);
+        FadeTarget.SetActive(false);
         canvasGroup.alpha = 1f; // Reset alpha for next time
     }
 
@@ -1717,7 +1734,6 @@ public class GameController : NetworkBehaviour
         }
     }
 
-
     //Helper Functions
     SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);
     bool IsAdjacent(SlotID from, SlotID to) => adjacency[from.slotNumber].Contains(to.slotNumber);
@@ -1761,20 +1777,18 @@ public class GameController : NetworkBehaviour
 
             adjacency = new Dictionary<int, int[]>
         {
-            {1, new int[] {2, 8, 9}}, {2, new int[] {1, 3, 10}}, {3, new int[] {2, 4, 11}},
-            {4, new int[] {3, 5, 12}}, {5, new int[] {4, 6, 13}}, {6, new int[] {5, 7, 14}},
-            {7, new int[] {6, 8, 15}}, {8, new int[] {7, 1, 16}}, {9, new int[] {1, 10, 16}},
-            {10, new int[] {2, 9, 11}}, {11, new int[] {3, 10, 12}}, {12, new int[] {4, 11, 13}},
-            {13, new int[] {5, 12, 14}}, {14, new int[] {6, 13, 15}}, {15, new int[] {7, 14, 16}},
+            {1, new int[] {2, 8}}, {2, new int[] {1, 3}}, {3, new int[] {2, 4}},
+            {4, new int[] {3, 5, 12}}, {5, new int[] {4, 6}}, {6, new int[] {5, 7, 14}},
+            {7, new int[] {6, 8}}, {8, new int[] {7, 1, 16}}, {9, new int[] {10, 16}},
+            {10, new int[] {2, 9, 11}}, {11, new int[] {10, 12}}, {12, new int[] {4, 11, 13}},
+            {13, new int[] {12, 14}}, {14, new int[] {6, 13, 15}}, {15, new int[] {14, 16}},
             {16, new int[] {8, 15, 9}}
         };
 
             mills = new List<int[]>
         {
             new int[] {1,2,3}, new int[] {3,4,5}, new int[] {5,6,7}, new int[] {7,8,1},
-            new int[] {9,10,11}, new int[] {11,12,13}, new int[] {13,14,15}, new int[] {15,16,9},
-            new int[] {1,9,16}, new int[] {2,10,15}, new int[] {3,11,14}, new int[] {4,12,13},
-            new int[] {5,13,12}, new int[] {6,14,11}, new int[] {7,15,10}, new int[] {8,16,9}
+            new int[] {9,10,11}, new int[] {11,12,13}, new int[] {13,14,15}, new int[] {15,16,9}
         };
         }
 
