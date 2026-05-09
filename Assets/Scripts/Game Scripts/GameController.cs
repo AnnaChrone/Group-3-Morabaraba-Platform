@@ -577,8 +577,15 @@ public class GameController : NetworkBehaviour
         Debug.Log("Playing PLACE AUDIO");
         if (CheckMill(slot.slotNumber, CurrentPlayer.Value))
         {
-            CurrentPhase.Value = GamePhase.Capturing;
-            return;
+            int opponent = (CurrentPlayer.Value == 1) ? 2 : 1;
+
+            if (HasAnyCapturablePiece(opponent))
+            {
+                CurrentPhase.Value = GamePhase.Capturing;
+                return;
+            }
+
+            Debug.Log("Mill formed but opponent has no capturable pieces.");
         }
 
         if (PlacementCounter.Value >= totalPlacements)
@@ -586,6 +593,13 @@ public class GameController : NetworkBehaviour
             CurrentPhase.Value = GamePhase.Moving;
         }
         UpdatePiecesClientRpc();
+
+        if (HasWon())
+        {
+            ServerGameOver(CurrentPlayer.Value, "Your opponent has nowhere to move to!", "You have nowhere to move to!");
+            return;
+        }
+
         EndTurn();
     }
 
@@ -636,10 +650,24 @@ public class GameController : NetworkBehaviour
 
         if (CheckMill(slot.slotNumber, currentPlayer))
         {
-            CurrentPhase.Value = GamePhase.Capturing;
-            return;
+            int opponent = (currentPlayer == 1) ? 2 : 1;
+
+            if (HasAnyCapturablePiece(opponent))
+            {
+                CurrentPhase.Value = GamePhase.Capturing;
+                return;
+            }
+
+            Debug.Log("Mill formed but opponent has no capturable pieces.");
         }
         UpdatePiecesClientRpc();
+
+        if (HasWon())
+        {
+            ServerGameOver(CurrentPlayer.Value, "Your opponent has nowhere to move to!", "You have nowhere to move to!");
+            return;
+        }
+
         EndTurn();
     }
 
@@ -698,6 +726,33 @@ public class GameController : NetworkBehaviour
 
     void EndTurn()
     {
+        // Clear selected slot highlight if one exists
+        if (SelectedSlot.Value != 0)
+        {
+            SlotID selected = GetSlotByNumber(SelectedSlot.Value);
+
+            if (selected != null)
+            {
+                selected.SetMillStatus(selected.isInMill);
+
+                if (selected.slotUI != null)
+                {
+                    int owner = GetSlotOwner(selected.slotNumber);
+
+                    if (owner != 0)
+                    {
+                        selected.slotUI.SetPlayerColor(owner);
+                    }
+                    else
+                    {
+                        selected.slotUI.ResetColor();
+                    }
+                }
+            }
+
+            SelectedSlot.Value = 0;
+        }
+
         CurrentPlayer.Value = (CurrentPlayer.Value == 1) ? 2 : 1;
 
         // Reset turn timer when turn changes
@@ -1737,7 +1792,33 @@ public class GameController : NetworkBehaviour
     //Helper Functions
     SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);
     bool IsAdjacent(SlotID from, SlotID to) => adjacency[from.slotNumber].Contains(to.slotNumber);
+    bool HasAnyCapturablePiece(int opponent)
+    {
+        if (allSlots == null) return false;
 
+        // First check for non-mill pieces
+        foreach (var slot in allSlots)
+        {
+            if (slot != null &&
+                GetSlotOwner(slot.slotNumber) == opponent &&
+                !slot.isInMill)
+            {
+                return true;
+            }
+        }
+
+        // If no free pieces exist, check if they at least have mill pieces
+        foreach (var slot in allSlots)
+        {
+            if (slot != null &&
+                GetSlotOwner(slot.slotNumber) == opponent)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
     void HardcodeGameData()
     {
         string gameType = GameSettings.GameType;
