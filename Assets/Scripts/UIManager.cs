@@ -246,7 +246,7 @@ public class UIManager : NetworkBehaviour
             Debug.Log($" Display list generated: {string.Join(", ", playersInLobbyDisplay)}");
 
             UpdateHostingPlayerList();
-
+            UpdateStartButtonState();
         }
         catch (RelayServiceException e)
         {
@@ -389,6 +389,25 @@ public class UIManager : NetworkBehaviour
         }
     }
 
+    void UpdateStartButtonState()
+    {
+        if (!isHost || startGameButton == null) return;
+
+        // Enable button only if 2+ players are in the lobby
+        startGameButton.interactable = playersInLobbyDisplay.Count >= 2;
+
+        // Optional: Visual feedback in button text
+        var buttonText = startGameButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+        if (buttonText != null && playersInLobbyDisplay.Count < 2)
+        {
+            buttonText.SetText($"Waiting for Players ({playersInLobbyDisplay.Count}/2)");
+        }
+        else if (buttonText != null)
+        {
+            buttonText.SetText("Start Game");
+        }
+    }
+
     void SetupHostingDropdowns()
     {
         // Game Type Dropdown
@@ -426,6 +445,7 @@ public class UIManager : NetworkBehaviour
 
         // Send to server (which will broadcast to all clients)
         RequestLobbySettingsUpdateServerRpc(newGameType, gameTime);
+        UpdateStartButtonState();
     }
 
 
@@ -443,6 +463,7 @@ public class UIManager : NetworkBehaviour
 
         // Send to server (which will broadcast to all clients)
         RequestLobbySettingsUpdateServerRpc(gameType, newTime);
+        UpdateStartButtonState();
     }
 
     void UpdateHostingPlayerList()
@@ -707,6 +728,7 @@ public class UIManager : NetworkBehaviour
         UpdateDisplayList();
         UpdateHostingPlayerList();
         BroadcastPlayerListUpdate();
+        UpdateStartButtonState();
     }
 
     void OnClientDisconnected(ulong clientId)
@@ -721,6 +743,7 @@ public class UIManager : NetworkBehaviour
 
             UpdateDisplayList();
             BroadcastPlayerListUpdate();
+            UpdateStartButtonState();
             return;
         }
 
@@ -810,16 +833,14 @@ public class UIManager : NetworkBehaviour
         // Add host with role label
         if (!string.IsNullOrEmpty(host.name))
         {
-            string label = IsServer ? "(You)" : "(Host)";
-            playersInLobbyDisplay.Add($"{host.name} {label}".Trim());
-            Debug.Log($" Host added to display: {host.name} {label}");
+            playersInLobbyDisplay.Add($"{host.name}".Trim());
+            Debug.Log($" Host added to display: {host.name}");
         }
         else if (parsed.Count > 0)
         {
             // Fallback: if no CID:0 found, use first entry as host
             var first = parsed[0];
-            string label = IsServer ? "(You)" : "(Host)";
-            playersInLobbyDisplay.Add($"{first.name} {label}".Trim());
+            playersInLobbyDisplay.Add($"{first.name}".Trim());
             Debug.LogWarning($" No CID:0 host found, using first entry: {first.name}");
         }
 
@@ -827,9 +848,7 @@ public class UIManager : NetworkBehaviour
         foreach (var p in others)
         {
             if (string.IsNullOrEmpty(p.name)) continue;
-
-            string label = (p.cid == NetworkManager.Singleton?.LocalClientId) ? " (You)" : "";
-            playersInLobbyDisplay.Add($"{p.name}{label}".Trim());
+            playersInLobbyDisplay.Add(p.name.Trim());
         }
 
         Debug.Log($" Final display list: [{string.Join("], [", playersInLobbyDisplay)}]");
