@@ -400,7 +400,7 @@ public class UIManager : NetworkBehaviour
         var buttonText = startGameButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
         if (buttonText != null && playersInLobbyDisplay.Count < 2)
         {
-            buttonText.SetText($"Waiting for Players ({playersInLobbyDisplay.Count}/2)");
+            buttonText.SetText($"Waiting for Players...");
         }
         else if (buttonText != null)
         {
