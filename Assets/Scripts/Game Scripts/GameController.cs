@@ -266,7 +266,11 @@ public class GameController : NetworkBehaviour
                     if (turnTimeRemaining <= 0f)
                     {
                         turnTimeRemaining = 0f;
-
+                        if (SelectedSlot.Value != 0)
+                        {
+                            ClearSelectedSlotClientRpc(SelectedSlot.Value);
+                            SelectedSlot.Value = 0;
+                        }
                         EndTurn();
                         ResetTurnTimer();
 
@@ -285,6 +289,27 @@ public class GameController : NetworkBehaviour
         }
 
         
+    }
+
+    [ClientRpc]
+    void ClearSelectedSlotClientRpc(int slotNumber)
+    {
+        var slot = GetSlotByNumber(slotNumber);
+        if (slot != null && slot.slotUI != null)
+        {
+            int owner = GetSlotOwner(slotNumber);
+            if (owner != 0)
+            {
+                if (slot.isInMill)
+                    slot.slotUI.HighlightMill(owner);
+                else
+                    slot.slotUI.SetPlayerColor(owner);
+            }
+            else
+            {
+                slot.slotUI.ResetColor();
+            }
+        }
     }
     //INITIALIZATION
 
