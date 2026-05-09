@@ -1395,29 +1395,29 @@ public class GameController : NetworkBehaviour
         timerRunning = true;
 
         // Check for turn timer modes first
-        if (gameTimeSetting == "5s" || gameTimeSetting == "15s" || gameTimeSetting == "30s")
+        if (gameTimeSetting == "5s turns" || gameTimeSetting == "15s turns" || gameTimeSetting == "30s turns")
         {
             timerMode = TimerMode.TurnTimer;
 
             switch (gameTimeSetting)
             {
-                case "5s": turnTimeRemaining = 5f; break;
-                case "15s": turnTimeRemaining = 15f; break;
-                case "30s": turnTimeRemaining = 30f; break;
+                case "5s turns": turnTimeRemaining = 5f; break;
+                case "15s turns": turnTimeRemaining = 15f; break;
+                case "30s turns": turnTimeRemaining = 30f; break;
                 default: turnTimeRemaining = 30f; break;
             }
             Debug.Log($"Turn timer mode enabled: {turnTimeRemaining} seconds per turn");
         }
         // Check for game timer modes
-        else if (gameTimeSetting == "5:00" || gameTimeSetting == "10:00" || gameTimeSetting == "15:00")
+        else if (gameTimeSetting == "5:00 game" || gameTimeSetting == "10:00 game" || gameTimeSetting == "15:00 game")
         {
             timerMode = TimerMode.GameTimer;
 
             switch (gameTimeSetting)
             {
-                case "5:00": gameTimeRemaining = 300f; break;
-                case "10:00": gameTimeRemaining = 600f; break;
-                case "15:00": gameTimeRemaining = 900f; break;
+                case "5:00 game": gameTimeRemaining = 300f; break;
+                case "10:00 game": gameTimeRemaining = 600f; break;
+                case "15:00 game": gameTimeRemaining = 900f; break;
                 default: gameTimeRemaining = 600f; break;
             }
             Debug.Log($"Game timer mode enabled: {gameTimeRemaining} seconds total");
@@ -1479,9 +1479,9 @@ public class GameController : NetworkBehaviour
 
         switch (GameSettings.GameTime)
         {
-            case "5s": turnTimeRemaining = 5f; break;
-            case "15s": turnTimeRemaining = 15f; break;
-            case "30s": turnTimeRemaining = 30f; break;
+            case "5s turns": turnTimeRemaining = 5f; break;
+            case "15s turns": turnTimeRemaining = 15f; break;
+            case "30s turns": turnTimeRemaining = 30f; break;
             default: turnTimeRemaining = 30f; break;
         }
 
