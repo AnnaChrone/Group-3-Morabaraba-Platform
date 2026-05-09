@@ -1614,19 +1614,44 @@ public class GameController : NetworkBehaviour
         if (GameEnded.Value) return;
 
         timerRunning = false;
-        GameEnded.Value = true;
 
-        int winner = (loserPlayerId == 1) ? 2 : 1;
+        // Clear any selected slot first
+        if (SelectedSlot.Value != 0)
+        {
+            ClearSelectedSlotClientRpc(SelectedSlot.Value);
+            SelectedSlot.Value = 0;
+        }
+
+        GameEnded.Value = true;
 
         if (loserPlayerId == 0)
         {
-            // Draw by timeout
-            ServerGameOver(0, "Game ended in a draw - Time's up!", "Game ended in a draw - Time's up!");
+            // Draw by timeout - announce draw without heavy Relay operations
+            float totalGameTime = Time.time - gameStartTime;
+            TotalGameTime.Value = totalGameTime;
+
+            // Send draw result directly without going through ServerGameOver
+            GameOverClientRpc(0, "Game ended in a draw - Time's up!", "Game ended in a draw - Time's up!",
+                             totalGameTime,
+                             Player1CapturesCount.Value, Player2CapturesCount.Value);
         }
         else
         {
-            ServerGameOver(winner, "Opponent ran out of time!", "You ran out of time!");
+            int winner = (loserPlayerId == 1) ? 2 : 1;
+            float totalGameTime = Time.time - gameStartTime;
+            TotalGameTime.Value = totalGameTime;
+
+            string winReason = loserPlayerId == 1 ? "Opponent ran out of time!" : "Opponent ran out of time!";
+            string lossReason = loserPlayerId == 1 ? "You ran out of time!" : "You ran out of time!";
+
+            // Send game over result directly
+            GameOverClientRpc(winner, winReason, lossReason,
+                             totalGameTime,
+                             Player1CapturesCount.Value, Player2CapturesCount.Value);
         }
+
+        // Optionally disable timer updates
+        timerRunning = false;
     }
 
     public void PauseGame(bool pause)
