@@ -70,7 +70,6 @@ public class UIManager : NetworkBehaviour
             Destroy(gameObject);
         }
     }
-
     private async void Start()
     {
         try
@@ -197,7 +196,7 @@ public class UIManager : NetworkBehaviour
         if (startGameButton != null)
         {
             var buttonText = startGameButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-            if (buttonText != null) buttonText.SetText("Creating Lobby...");
+            if (buttonText != null) buttonText.SetText("Creating Lobby");
             startGameButton.interactable = false;
         }
 
@@ -368,7 +367,6 @@ public class UIManager : NetworkBehaviour
         startGameButton.interactable = false;
 
         // Log current settings before starting game
-        Debug.Log($"=== STARTING GAME WITH SETTINGS ===");
         Debug.Log($"GameType: {GameSettings.GameType}");
         Debug.Log($"GameTime: {GameSettings.GameTime}");
 
@@ -419,13 +417,13 @@ public class UIManager : NetworkBehaviour
         // Time Options Dropdown - Add all timer modes
         hostTimeDropdown.ClearOptions();
         hostTimeDropdown.AddOptions(new List<string> {
-        "Casual",      // No timer
-        "5:00",        // 5 minute game timer
-        "10:00",       // 10 minute game timer  
-        "15:00",       // 15 minute game timer
-        "5s",          // 5 second turn timer
-        "15s",         // 15 second turn timer
-        "30s"          // 30 second turn timer
+        "Casual mode",      // No timer
+        "5:00 game",        // 5 minute game timer
+        "10:00 game",       // 10 minute game timer  
+        "15:00 game",       // 15 minute game timer
+        "5s turns",          // 5 second turn timer
+        "15s turns",         // 15 second turn timer
+        "30s turns"          // 30 second turn timer
     });
         hostTimeDropdown.onValueChanged.RemoveAllListeners();
         hostTimeDropdown.onValueChanged.AddListener(OnHostTimeChanged);
@@ -452,7 +450,7 @@ public class UIManager : NetworkBehaviour
     void OnHostTimeChanged(int index)
     {
         if (!isHost) return;
-        string[] options = { "Casual", "5:00", "10:00", "15:00", "5s", "15s", "30s" };
+        string[] options = { "Casual mode", "5:00 game", "10:00 game", "15:00 game", "5s turns", "15s turns", "30s turns" };
         string newTime = options[index];
 
         Debug.Log($"Host changed game time to: {newTime}");
@@ -675,7 +673,7 @@ public class UIManager : NetworkBehaviour
             }
             if (hostTimeDropdown != null)
             {
-                string[] timeOptions = { "Casual", "5:00", "10:00", "15:00", "5s", "15s", "30s" };
+                string[] timeOptions = { "Casual mode", "5:00 game", "10:00 game", "15:00 game", "5s turns", "15s turns", "30s turns" };
                 int index = System.Array.IndexOf(timeOptions, newTime);
                 if (index >= 0) hostTimeDropdown.value = index;
             }
@@ -788,19 +786,16 @@ public class UIManager : NetworkBehaviour
         BroadcastPlayerListUpdate();
     }
 
-    //  Generate display list from raw data - host always first
     void UpdateDisplayList()
     {
         playersInLobbyDisplay.Clear();
-
-        // Parse raw entries: "username|CID:xxx" → (name, clientId)
         var parsed = new List<(string name, ulong cid)>();
 
         foreach (var raw in playersInLobbyRaw)
         {
             if (string.IsNullOrEmpty(raw)) continue;
 
-            //  More robust parsing with error handling
+            //parsing with error handling
             int cidIndex = raw.LastIndexOf("|CID:");
             if (cidIndex > 0)
             {
@@ -821,7 +816,6 @@ public class UIManager : NetworkBehaviour
             }
             else
             {
-                // ✅ Fallback: treat entire string as name, assign dummy CID
                 Debug.LogWarning($" No CID tag found in: '{raw}' - treating as name only");
                 parsed.Add((string.IsNullOrEmpty(raw) ? "Guest" : raw, 999));
             }
@@ -838,13 +832,11 @@ public class UIManager : NetworkBehaviour
         }
         else if (parsed.Count > 0)
         {
-            // Fallback: if no CID:0 found, use first entry as host
             var first = parsed[0];
             playersInLobbyDisplay.Add($"{first.name}".Trim());
             Debug.LogWarning($" No CID:0 host found, using first entry: {first.name}");
         }
 
-        // Add others with "(You)" for local client
         foreach (var p in others)
         {
             if (string.IsNullOrEmpty(p.name)) continue;

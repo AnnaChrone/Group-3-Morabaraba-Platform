@@ -5790,8 +5790,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: (It must be more than 8 characters and contain at least one uppercase,
-    lowercase, number and special character)
+  m_text: (Must be more than 8 characters and contain at least one uppercase, lowercase,
+    number and special character)
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 872ab76d90efbc449990add8c1ca5059, type: 2}
   m_sharedMaterial: {fileID: -2050847696049269882, guid: 872ab76d90efbc449990add8c1ca5059, type: 2}
