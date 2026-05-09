@@ -131,6 +131,7 @@ public class GameController : NetworkBehaviour
     public SlotID[] allSlots;
     public SlotUI[] slotUIs;
     public GameObject Rules;
+    public GameObject millErrorPanel;
     private bool open =false;
 
     [Header("Win and Loss Screens")]
@@ -258,18 +259,20 @@ public class GameController : NetworkBehaviour
             }
             else if (timerMode == TimerMode.TurnTimer)
             {
-                turnTimeRemaining -= dt;
-
-                if (turnTimeRemaining <= 0f)
+                if (CurrentPhase.Value != GamePhase.Capturing) //pauses turn timer if capturing
                 {
-                    turnTimeRemaining = 0f;
-                    // Time's up - end turn
-                    EndTurn();
-                    ResetTurnTimer();
+                    turnTimeRemaining -= dt;
 
-                    // Notify clients of timer reset
-                    UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
-                    return;
+                    if (turnTimeRemaining <= 0f)
+                    {
+                        turnTimeRemaining = 0f;
+
+                        EndTurn();
+                        ResetTurnTimer();
+
+                        UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
+                        return;
+                    }
                 }
             }
 
@@ -658,7 +661,13 @@ public class GameController : NetworkBehaviour
         if (GetSlotOwner(slot.slotNumber) != opponent) return;
 
         if (slot.isInMill && OpponentHasFreePiece(opponent))
+        {
+            PlaySoundClientRpc("Invalid");
+            //DISPLAY MILL ERROR HERE
+            ShowEffectClientRpc("Mill");
             return;
+        }
+
         SaveSnapshot(); //stores snapshot per turn
         SetSlotOwner(slot.slotNumber, 0);
 
@@ -1323,32 +1332,37 @@ public class GameController : NetworkBehaviour
         PlaySoundClientRpc("Rewind");
 
         // Show rewind effect for all players
-        ShowRewindEffectClientRpc();
+        ShowEffectClientRpc("Rewind");
     }
 
     [ClientRpc]
-    public void ShowRewindEffectClientRpc()
+    public void ShowEffectClientRpc(string showTarget)
     {
-        if (rewindEffectPanel != null)
+        if (showTarget == "Rewind" && rewindEffectPanel != null)
         {
             // Stop any ongoing coroutine on this panel
-            StopCoroutine("FadeOutRewindPanel");
-            StartCoroutine(FadeOutRewindPanel());
+            StopCoroutine("FadeOutPanel");
+            StartCoroutine(FadeOutPanel(rewindEffectPanel));
+        } else if (showTarget == "Mill" && rewindEffectPanel != null)
+        {
+            // Stop any ongoing coroutine on this panel
+            StopCoroutine("FadeOutPanel");
+            StartCoroutine(FadeOutPanel(millErrorPanel));
         }
     }
 
 
-    private System.Collections.IEnumerator FadeOutRewindPanel()
+    private System.Collections.IEnumerator FadeOutPanel(GameObject FadeTarget)
     {
         // Activate the panel
-        rewindEffectPanel.SetActive(true);
+        FadeTarget.SetActive(true);
 
         // Set initial alpha (if using CanvasGroup)
-        CanvasGroup canvasGroup = rewindEffectPanel.GetComponent<CanvasGroup>();
+        CanvasGroup canvasGroup = FadeTarget.GetComponent<CanvasGroup>();
         if (canvasGroup == null)
         {
             // If no CanvasGroup, add one
-            canvasGroup = rewindEffectPanel.AddComponent<CanvasGroup>();
+            canvasGroup = FadeTarget.AddComponent<CanvasGroup>();
         }
 
         canvasGroup.alpha = 1f;
@@ -1369,7 +1383,7 @@ public class GameController : NetworkBehaviour
         }
 
         // Deactivate the panel
-        rewindEffectPanel.SetActive(false);
+        FadeTarget.SetActive(false);
         canvasGroup.alpha = 1f; // Reset alpha for next time
     }
 
