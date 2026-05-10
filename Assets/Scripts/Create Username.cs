@@ -172,6 +172,86 @@ public class CreateUsername : MonoBehaviour
     }
     }
 
+    public bool isValidUsername(string username, out string error) //Seperate the validation to make testing easier
+    {
+        error = "";
+        //Validation tests
+        if (string.IsNullOrEmpty(username))
+        {
+            error = "Please enter a username";
+            return false;
+        }
+
+        if (username.Length < 3)
+        {
+            error = "Username must be 3+ characters";
+            return false;
+        }
+
+        if (username.Length > 20)
+        {
+            error = "Username must be under 20 characters";
+            return false;
+        }
+
+        return true;
+    }
+
+    public bool isValidPassword(string password, out string error) //Seperate validation for password test cases
+    {
+        error = "";
+
+        if (string.IsNullOrEmpty(password))
+        {
+            error = "Please enter a password";
+            return false;
+        }
+
+        if (password.Length < 8)
+        {
+            error = "Password must be 8 characters or more";
+            return false;
+        }
+
+        bool hasUpper = false;
+        bool hasLower = false;
+        bool hasNum = false;
+        bool hasSpecial = false;
+
+        foreach (char c in password)
+        {
+            if (char.IsUpper(c)) hasUpper = true;
+            if (char.IsLower(c)) hasLower = true;
+            if (char.IsDigit(c)) hasNum = true;
+            if (!char.IsLetterOrDigit(c)) hasSpecial = true;
+        }
+
+        if (!hasLower)
+        {
+            error = "Password needs a lowercase letter";
+            return false;
+        }
+
+        if (!hasUpper)
+        {
+            error = "Password needs an uppercase letter";
+            return false;
+        }
+
+        if (!hasNum)
+        {
+            error = "Password needs a number";
+            return false;
+        }
+
+        if (!hasSpecial)
+        {
+            error = "Password needs a special character";
+            return false;
+        }
+
+        return true;
+    }
 
     public async void OnSignInButtonClicked()
     {
