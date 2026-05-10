@@ -38,7 +38,12 @@ public class SlotID : MonoBehaviour
     {
         occupiedBy = player;
 
-        slotUI.SetPlayerColor(player);
+        if (player == 1)
+            slotUI.SetPlayerColor(1);
+        else if (player == 2)
+            slotUI.SetPlayerColor(2);
+        else
+            slotUI.ResetColor(); // only here for actual empty state
     }
 
     // Clear the slot (VERY IMPORTANT for movement)

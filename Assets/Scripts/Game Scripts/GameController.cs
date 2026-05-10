@@ -266,7 +266,11 @@ public class GameController : NetworkBehaviour
                     if (turnTimeRemaining <= 0f)
                     {
                         turnTimeRemaining = 0f;
-
+                        if (SelectedSlot.Value != 0)
+                        {
+                            ClearSelectedSlotClientRpc(SelectedSlot.Value);
+                            SelectedSlot.Value = 0;
+                        }
                         EndTurn();
                         ResetTurnTimer();
 
@@ -284,18 +288,26 @@ public class GameController : NetworkBehaviour
             }
         }
 
-        // Highlight selected slot during moving phase (moved outside server check)
-        if (CurrentPhase.Value == GamePhase.Moving && SelectedSlot.Value != 0)
+        
+    }
+
+    [ClientRpc]
+    void ClearSelectedSlotClientRpc(int slotNumber)
+    {
+        var slot = GetSlotByNumber(slotNumber);
+        if (slot != null && slot.slotUI != null)
         {
-            var slot = GetSlotByNumber(SelectedSlot.Value);
-            if (slot != null)
+            int owner = GetSlotOwner(slotNumber);
+            if (owner != 0)
             {
-                SlotUI slotUI = slot.GetComponent<SlotUI>();
-                if (slotUI != null)
-                {
-                    slotUI.Highlight(CurrentPlayer.Value);
-                }
-                slot.GetComponent<UnityEngine.UI.Button>().interactable = true;
+                if (slot.isInMill)
+                    slot.slotUI.HighlightMill(owner);
+                else
+                    slot.slotUI.SetPlayerColor(owner);
+            }
+            else
+            {
+                slot.slotUI.ResetColor();
             }
         }
     }
@@ -342,6 +354,7 @@ public class GameController : NetworkBehaviour
         Player2Rewinds.OnValueChanged += OnRewindChanged;
         TotalGameTime.OnValueChanged += OnTotalGameTimeChanged;
         IsGamePaused.OnValueChanged += OnPauseStateChanged;
+        SelectedSlot.OnValueChanged += OnSelectedSlotChanged;
 
         if (IsServer)
         {
@@ -491,9 +504,6 @@ public class GameController : NetworkBehaviour
         }
 
         bool isMyTurn = IsLocalPlayerTurn();
-       // Debug.Log($" [CLIENT] IsLocalPlayerTurn()={isMyTurn}");
-       // Debug.Log($" [CLIENT] CurrentPlayer.Value={CurrentPlayer.Value}");
-       // Debug.Log($" [CLIENT] CurrentPhase.Value={CurrentPhase.Value}");
 
         if (!isMyTurn)
         {
@@ -622,9 +632,15 @@ public class GameController : NetworkBehaviour
 
         if (!IsValidMove(fromSlot, slot, currentPlayer))
         {
-            fromSlot.slotUI.SetPlayerColor(currentPlayer);
-            SelectedSlot.Value = 0;
             PlaySoundClientRpc("Invalid");
+            SelectedSlot.Value = 0;
+
+            // Restore the proper color (respecting mill status)
+            if (fromSlot.isInMill)
+                fromSlot.slotUI.HighlightMill(currentPlayer);
+            else
+                fromSlot.slotUI.SetPlayerColor(currentPlayer);
+
             return;
         }
 
@@ -634,7 +650,6 @@ public class GameController : NetworkBehaviour
 
         SetSlotOwner(SelectedSlot.Value, 0);
         SetSlotOwner(slot.slotNumber, currentPlayer);
-
         // Audio
         if (isFlying)
         {
@@ -671,6 +686,29 @@ public class GameController : NetworkBehaviour
         EndTurn();
     }
 
+    [ClientRpc]
+    void MovePieceVisualClientRpc(int fromSlot, int toSlot, int player)
+    {
+        SlotID from = GetSlotByNumber(fromSlot);
+        SlotID to = GetSlotByNumber(toSlot);
+
+        if (from != null)
+            from.ClearSlot();
+
+        if (to != null)
+            to.SetOccupant(player);
+    }
+
+    [ClientRpc]
+    void RestoreSlotColorClientRpc(int slotNumber)
+    {
+        var slot = GetSlotByNumber(slotNumber);
+        if (slot != null && slot.slotUI != null)
+        {
+            slot.slotUI.SetPlayerColor(CurrentPlayer.Value);
+        }
+    }
+
     bool IsValidMove(SlotID from, SlotID to, int player)
     {
         if (GetSlotOwner(to.slotNumber) != 0) return false;
@@ -691,13 +729,17 @@ public class GameController : NetworkBehaviour
         if (slot.isInMill && OpponentHasFreePiece(opponent))
         {
             PlaySoundClientRpc("Invalid");
-            //DISPLAY MILL ERROR HERE
             ShowEffectClientRpc("Mill");
             return;
         }
 
-        SaveSnapshot(); //stores snapshot per turn
+        SaveSnapshot();
+
+        // Clear the captured piece
         SetSlotOwner(slot.slotNumber, 0);
+
+        // EXPLICITLY clear the visual on all clients
+        ClearSlotVisualClientRpc(slot.slotNumber);
 
         if (CurrentPlayer.Value == 1)
         {
@@ -711,19 +753,30 @@ public class GameController : NetworkBehaviour
             Player2CapturesCount.Value++;
             UpdateCaptureUIClientRpc(2, Player2CapturesCount.Value);
         }
-       
+
         PlaySoundClientRpc("Capture");
         CheckBrokenMills(opponent);
+
         if (HasWon())
         {
-            ServerGameOver(CurrentPlayer.Value,WinReason.text,LossReason.text);
+            ServerGameOver(CurrentPlayer.Value, WinReason.text, LossReason.text);
             return;
         }
 
-        CurrentPhase.Value = (PlacementCounter.Value >= totalPlacements) ? GamePhase.Moving : GamePhase.Placing; UpdatePiecesClientRpc();
+        CurrentPhase.Value = (PlacementCounter.Value >= totalPlacements) ? GamePhase.Moving : GamePhase.Placing;
+        UpdatePiecesClientRpc();
         EndTurn();
     }
 
+    [ClientRpc]
+    void ClearSlotVisualClientRpc(int slotNumber)
+    {
+        var slot = GetSlotByNumber(slotNumber);
+        if (slot != null)
+        {
+            slot.ClearSlot(); // This handles resetting occupancy and color
+        }
+    }
     void EndTurn()
     {
         // Clear selected slot highlight if one exists
@@ -750,7 +803,10 @@ public class GameController : NetworkBehaviour
                 }
             }
 
-            SelectedSlot.Value = 0;
+            if (CurrentPhase.Value != GamePhase.Moving)
+            {
+                SelectedSlot.Value = 0;
+            }
         }
 
         CurrentPlayer.Value = (CurrentPlayer.Value == 1) ? 2 : 1;
@@ -760,6 +816,11 @@ public class GameController : NetworkBehaviour
         {
             ResetTurnTimer();
         }
+    }
+
+    void OnSelectedSlotChanged(int oldVal, int newVal)
+    {
+        UpdateSelectionHighlight(oldVal, newVal);
     }
 
     void ServerGameOver(int winner, string winReason, string lossReason)
@@ -837,19 +898,19 @@ public class GameController : NetworkBehaviour
         int player1Left = Mathf.Max(0, piecesPerPlayer - player1Placed);
         int player2Left = Mathf.Max(0, piecesPerPlayer - player2Placed);
 
-        Player1Pieces.text = new string('●', player1Left);
-        Player2Pieces.text = new string('●', player2Left);
-        Player1Captures.text = new string('●', Player1CapturesCount.Value);
-        Player2Captures.text = new string('●', Player2CapturesCount.Value);
+        Player1Pieces.text = new string('•', player1Left);
+        Player2Pieces.text = new string('•', player2Left);
+        Player1Captures.text = new string('•', Player1CapturesCount.Value);
+        Player2Captures.text = new string('•', Player2CapturesCount.Value);
     }
 
     [ClientRpc]
     void UpdateCaptureUIClientRpc(int player, int newValue)
     {
         if (player == 1)
-            Player1Captures.text = new string('●', newValue);
+            Player1Captures.text = new string('•', newValue);
         else
-            Player2Captures.text = new string('●', newValue);
+            Player2Captures.text = new string('•', newValue);
     }
 
     [ClientRpc]
@@ -926,10 +987,14 @@ public class GameController : NetworkBehaviour
 
             if (states.TryGetValue(slot.slotNumber, out int owner))
             {
-                if (owner == 0)
-                    slot.ClearSlot();
-                else
+                if (owner != 0)
                     slot.SetOccupant(owner);
+                else
+                    slot.ClearSlot();  // clears empty slots!
+            }
+            else
+            {
+                slot.ClearSlot();  // Also clear if not found in states
             }
         }
         UpdateAllMills();
@@ -1549,19 +1614,44 @@ public class GameController : NetworkBehaviour
         if (GameEnded.Value) return;
 
         timerRunning = false;
-        GameEnded.Value = true;
 
-        int winner = (loserPlayerId == 1) ? 2 : 1;
+        // Clear any selected slot first
+        if (SelectedSlot.Value != 0)
+        {
+            ClearSelectedSlotClientRpc(SelectedSlot.Value);
+            SelectedSlot.Value = 0;
+        }
+
+        GameEnded.Value = true;
 
         if (loserPlayerId == 0)
         {
-            // Draw by timeout
-            ServerGameOver(0, "Game ended in a draw - Time's up!", "Game ended in a draw - Time's up!");
+            // Draw by timeout - announce draw without heavy Relay operations
+            float totalGameTime = Time.time - gameStartTime;
+            TotalGameTime.Value = totalGameTime;
+
+            // Send draw result directly without going through ServerGameOver
+            GameOverClientRpc(0, "Game ended in a draw - Time's up!", "Game ended in a draw - Time's up!",
+                             totalGameTime,
+                             Player1CapturesCount.Value, Player2CapturesCount.Value);
         }
         else
         {
-            ServerGameOver(winner, "Opponent ran out of time!", "You ran out of time!");
+            int winner = (loserPlayerId == 1) ? 2 : 1;
+            float totalGameTime = Time.time - gameStartTime;
+            TotalGameTime.Value = totalGameTime;
+
+            string winReason = loserPlayerId == 1 ? "Opponent ran out of time!" : "Opponent ran out of time!";
+            string lossReason = loserPlayerId == 1 ? "You ran out of time!" : "You ran out of time!";
+
+            // Send game over result directly
+            GameOverClientRpc(winner, winReason, lossReason,
+                             totalGameTime,
+                             Player1CapturesCount.Value, Player2CapturesCount.Value);
         }
+
+        // Optionally disable timer updates
+        timerRunning = false;
     }
 
     public void PauseGame(bool pause)
@@ -1604,6 +1694,39 @@ public class GameController : NetworkBehaviour
     }
     private float pauseStartTime = 0f;
     private const float MAX_PAUSE_DURATION = 300f; // 5 minutes max pause
+
+    void UpdateSelectionHighlight(int oldSlot, int newSlot)
+    {
+        // clear old highlight - restore original color
+        if (oldSlot != 0)
+        {
+            var old = GetSlotByNumber(oldSlot);
+            if (old != null)
+            {
+                var ui = old.GetComponent<SlotUI>();
+                if (ui != null)
+                {
+                    int owner = GetSlotOwner(oldSlot);
+                    if (owner != 0)
+                        ui.SetPlayerColor(owner);  // Restore player color
+                    else
+                        ui.ResetColor();
+                }
+            }
+        }
+
+        // apply new highlight
+        if (newSlot != 0)
+        {
+            var slot = GetSlotByNumber(newSlot);
+            if (slot != null)
+            {
+                var ui = slot.GetComponent<SlotUI>();
+                if (ui != null)
+                    ui.Highlight(CurrentPlayer.Value);
+            }
+        }
+    }
     void OnPauseStateChanged(bool oldVal, bool newVal)
     {
         if (newVal)
@@ -1818,6 +1941,30 @@ public class GameController : NetworkBehaviour
         }
 
         return false;
+    }
+
+    void ClearSelectionVisual()
+    {
+        if (SelectedSlot.Value == 0) return;
+
+        var slot = GetSlotByNumber(SelectedSlot.Value);
+        if (slot != null)
+        {
+            var ui = slot.GetComponent<SlotUI>();
+            if (ui != null)
+            {
+                int owner = GetSlotOwner(slot.slotNumber);
+                if (owner != 0)
+                {
+                    // Restore the player's actual color
+                    ui.SetPlayerColor(owner);
+                }
+                else
+                {
+                    ui.ResetColor();
+                }
+            }
+        }
     }
     void HardcodeGameData()
     {
