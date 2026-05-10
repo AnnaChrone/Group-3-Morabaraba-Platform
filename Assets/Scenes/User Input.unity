@@ -1252,7 +1252,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 404, y: -350}
+  m_AnchoredPosition: {x: 424, y: -315}
   m_SizeDelta: {x: 500, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &329602026
@@ -1285,7 +1285,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294113017
-  m_fontColor: {r: 0.9764706, g: 0.9647059, b: 0.9490196, a: 1}
+  m_fontColor: {r: 0.72156864, g: 0.13725491, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5013,7 +5013,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 369, y: -350}
+  m_AnchoredPosition: {x: 450, y: -307}
   m_SizeDelta: {x: 500, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1882233820
@@ -5054,7 +5054,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294113017
-  m_fontColor: {r: 0.9764706, g: 0.9647059, b: 0.9490196, a: 1}
+  m_fontColor: {r: 0.7207546, g: 0.13344844, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -6041,11 +6041,10 @@ MonoBehaviour:
   userPassword: {fileID: 547933345}
   createAccount: {fileID: 1584391930}
   signInButton: {fileID: 2130281949}
-  statusText: {fileID: 1882233821}
+  statusTextCreate: {fileID: 1882233821}
+  statusTextLogin: {fileID: 329602026}
   signInPanel: {fileID: 2052367115}
   lobbySceneName: Lobby
-  playerWins: 0
-  playerLosses: 0
 --- !u!4 &2024831190
 Transform:
   m_ObjectHideFlags: 0

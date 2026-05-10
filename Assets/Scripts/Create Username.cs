@@ -20,15 +20,13 @@ public class CreateUsername : MonoBehaviour
     public TMP_InputField userPassword;
     public Button createAccount;
     public Button signInButton;
-    public TextMeshProUGUI statusText; // Optional: shows "Signing in..." feedback
+    public TextMeshProUGUI statusTextCreate; //Text  for create username
+    public TextMeshProUGUI statusTextLogin;//Text for login
     public GameObject signInPanel;
 
     [Header("Scene Settings")]
     public string lobbySceneName = "Lobby"; // Change to your actual lobby scene name
 
-    [Header("Player Stats")]
-    public float playerWins;
-    public float playerLosses;
     private bool isInitialized = false;
     private bool isSigningIn = false;
 
@@ -54,24 +52,24 @@ public class CreateUsername : MonoBehaviour
         if (isSigningIn) return;
 
         string username = userInputCreate.text.Trim();
-        string password = userPasswordCreate.text.Trim();
+        string password = userPasswordCreate.text.Trim(); //Gets rid of spaces
 
         // Validate username
         if (string.IsNullOrEmpty(username))
         {
-            if (statusText != null) statusText.text = "Please enter a username";
+            if (statusTextCreate != null) statusTextCreate.text = "Please enter a username";
             return;
         }
 
         if (username.Length < 3)
         {
-            if (statusText != null) statusText.text = "Username must be 3+ characters";
+            if (statusTextCreate != null) statusTextCreate.text = "Username must be 3+ characters";
             return;
         }
 
         if (username.Length > 20)
         {
-            if (statusText != null) statusText.text = "Username must be under 20 characters";
+            if (statusTextCreate != null) statusTextCreate.text = "Username must be under 20 characters";
             return;
         }
 
@@ -83,19 +81,19 @@ public class CreateUsername : MonoBehaviour
 
         if (string.IsNullOrEmpty(password))
         {
-            if (statusText != null) statusText.text = "Please enter a password";
+            if (statusTextCreate != null) statusTextCreate.text = "Please enter a password";
             return;
         }
 
         if(password.Length < 8)
         {
-            if (statusText != null) statusText.text = "Password must be 8 characters or more";
+            if (statusTextCreate != null) statusTextCreate.text = "Password must be 8 characters or more";
             return;
         }
 
         if (password.Length > 20)
         {
-            if (statusText != null) statusText.text = "Password must be under 20 characters";
+            if (statusTextCreate != null) statusTextCreate.text = "Password must be under 20 characters";
             return;
         }
 
@@ -124,31 +122,31 @@ public class CreateUsername : MonoBehaviour
 
         if (!hasLower)
         {
-            statusText.text = "Password needs a lowercase letter";
+            statusTextCreate.text = "Password needs a lowercase letter";
             return;
         }
 
         if (!hasUpper)
         {
-            statusText.text = "Password needs an uppercase letter";
+            statusTextCreate.text = "Password needs an uppercase letter";
             return;
         }
 
         if(!hasNum)
         {
-            statusText.text = "Password needs a number";
+            statusTextCreate.text = "Password needs a number";
             return;
         }
 
         if (!hasSpecial)
         {
-            statusText.text = "Password needs a special character";
+            statusTextCreate.text = "Password needs a special character";
             return;
         }
 
         isSigningIn = true;
         createAccount.interactable = false;
-        statusText.text = "Creating account...";
+        statusTextCreate.text = "Creating account...";
 
     try
     {
@@ -158,14 +156,14 @@ public class CreateUsername : MonoBehaviour
         PlayerData.Instance.SetUsername(username);
         PlayerData.Instance.SetPassword(password);
 
-        await SaveCloudData(username, password); // optional
+        await SaveCloudData(username, password); //Saves to Cloud Save
 
         LoadLobbyScene();
     }
     catch (AuthenticationException e)
     {
         Debug.LogError(e);
-        statusText.text = "Account creation failed";
+        statusTextCreate.text = "Account creation failed"; //Triggers if trying to signing into an existing account
     }
     finally
     {
@@ -186,13 +184,13 @@ public class CreateUsername : MonoBehaviour
         // Validate username
         if (string.IsNullOrEmpty(username))
         {
-            if (statusText != null) statusText.text = "Please enter a username";
+            if (statusTextLogin != null) statusTextLogin.text = "Please enter a username";
             return;
         }
-
+        //Validate password
         if (string.IsNullOrEmpty(password))
         {
-            if (statusText != null) statusText.text = "Please enter a password";
+            if (statusTextLogin != null) statusTextLogin.text = "Please enter a password";
             return;
         }
 
@@ -201,7 +199,7 @@ public class CreateUsername : MonoBehaviour
         // Start sign-in process
         isSigningIn = true;
         if (signInButton != null) signInButton.interactable = false;
-        if (statusText != null) statusText.text = "Signing in...";
+        if (statusTextLogin != null) statusTextLogin.text = "Signing in...";
 
          try
     {
@@ -215,10 +213,15 @@ public class CreateUsername : MonoBehaviour
 
         LoadLobbyScene();
     }
-    catch (AuthenticationException e)
+    catch (AuthenticationException e) //Cateches invalid usernames and password
     {
         Debug.LogError(e);
-        statusText.text = "Invalid login";
+        statusTextLogin.text = "Invalid username or password";
+    }
+     catch (RequestFailedException e)
+    {
+        Debug.LogError(e);
+        statusTextLogin.text = "Invalid username or password";
     }
     finally
     {
@@ -226,19 +229,18 @@ public class CreateUsername : MonoBehaviour
         signInButton.interactable = true;
     }
     }
-    async Task InitializeServices()
+    async Task InitializeServices() //Loads unity services
     {
         try
         {
             await UnityServices.InitializeAsync();
-            //await AuthenticationService.Instance.SignInAnonymouslyAsync();
             isInitialized = true;
             Debug.Log("Unity Services initialized and signed in");
         }
         catch (System.Exception e)
         {
             Debug.LogError($"Failed to initialize services: {e.Message}");
-            if (statusText != null) statusText.text = "Connection failed";
+            if (statusTextLogin != null) statusTextLogin.text = "Connection failed";
         }
     }
 
@@ -248,7 +250,7 @@ public class CreateUsername : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
     }
 
-    public async Task SaveCloudData(string username, string password) //Create a save username button, add save password
+    public async Task SaveCloudData(string username, string password) //Dictionary that appears in the CLoud Save
     {
         var data = new Dictionary<string, object>
         {
@@ -265,7 +267,7 @@ public class CreateUsername : MonoBehaviour
         Debug.Log("Username saved to CloudSave");
     }
 
-    async Task LoadCloudData() //Move this to the sign in button
+    async Task LoadCloudData() //Loads all data in CLoud Save
     {
         
         var data = await CloudSaveService.Instance.Data.LoadAsync(new HashSet<string> { "wins", "losses","username","password","draw" });
@@ -285,11 +287,9 @@ public class CreateUsername : MonoBehaviour
     {
         // Load the lobby scene (additive or single)
         SceneManager.LoadScene(lobbySceneName);
-        // If you want to keep this scene loaded too (for persistent managers):
-        // SceneManager.LoadScene(lobbySceneName, LoadSceneMode.Additive);
     }
 
-    public void openSignInPanel()
+    public void openSignInPanel() //Toggle the sign in panel
     {
         signInPanel.SetActive(true);
     }
