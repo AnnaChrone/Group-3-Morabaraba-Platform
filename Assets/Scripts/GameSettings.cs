@@ -1,6 +1,4 @@
 using UnityEngine;
-
-// Create this script if it doesn't exist
 public static class GameSettings
 {
     private static string _gameType = "Morabaraba";

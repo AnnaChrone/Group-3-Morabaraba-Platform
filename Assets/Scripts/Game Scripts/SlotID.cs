@@ -4,16 +4,15 @@ using UnityEngine.UI;
 public class SlotID : MonoBehaviour
 {
     [Header("Slot Info")]
-    public int slotNumber;          // 1–24 (must match your adjacency)
+    public int slotNumber;  //Numbering of slots 1-24 (or 16 for Six Mens Morris)
     public SlotUI slotUI;
 
     [Header("State")]
     public int occupiedBy = 0;      // 0 = none, 1 = player1, 2 = player2
     public bool isInMill = false;
-    //private Image image;            // cached reference
     public GameController gameController;
 
-    // Cleaner check
+    //Checks who is occupying the slot
     public bool IsOccupied
     {
         get { return occupiedBy != 0; }
@@ -21,8 +20,13 @@ public class SlotID : MonoBehaviour
 
     void Awake()
     {
-        //image = GetComponent<Image>();
         slotUI = GetComponent<SlotUI>();
+    }
+
+    //Allows Awake() to be called for testing purposes
+    public void InitializeForTesting()
+    {
+        Awake();
     }
 
     void OnMouseDown()
@@ -33,7 +37,7 @@ public class SlotID : MonoBehaviour
         }
     }
 
-    // Place or move a cow
+    // Place or move a piece
     public void SetOccupant(int player)
     {
         occupiedBy = player;
@@ -46,13 +50,11 @@ public class SlotID : MonoBehaviour
             slotUI.ResetColor(); // only here for actual empty state
     }
 
-    // Clear the slot (VERY IMPORTANT for movement)
+    // Clear the slot when moved or captured
     public void ClearSlot()
     {
         occupiedBy = 0;
         isInMill = false;
-
-        //image.color = Color.white;
         slotUI?.ResetColor();
     }
 

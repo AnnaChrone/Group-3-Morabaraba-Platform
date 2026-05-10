@@ -43,7 +43,6 @@ public class SlotUI : MonoBehaviour
         }
     }
 
-    /// <summary> Highlight this slot temporarily (e.g., when selected) </summary>
     public void Highlight(int player)
     {
         switch (player)
