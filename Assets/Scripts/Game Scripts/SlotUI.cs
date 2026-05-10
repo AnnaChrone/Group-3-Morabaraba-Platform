@@ -13,8 +13,8 @@ public class SlotUI : MonoBehaviour
     public Color player2Color = Color.red;
     public Color highlightplayer1Color = Color.yellow;
     public Color highlightplayer2Color = Color.yellow;
-    public Color millplayer1Color = new Color(1f, 0.84f, 0f); // gold
-    public Color millplayer2Color = new Color(1f, 0.84f, 0f); // gold
+    public Color millplayer1Color = new Color(1f, 0.84f, 0f); 
+    public Color millplayer2Color = new Color(1f, 0.84f, 0f); 
 
     private Color originalColor;
 
@@ -25,6 +25,12 @@ public class SlotUI : MonoBehaviour
             slotImage = GetComponent<Image>();
 
         originalColor = slotImage.color;
+    }
+
+    //Allows Awake() to be called for testing purposes
+    public void InitializeForTesting()
+    {
+        Awake();
     }
 
     public void SetPlayerColor(int player)
@@ -80,18 +86,4 @@ public class SlotUI : MonoBehaviour
         slotImage.color = emptyColor;
     }
 
-
-    public void Flash(Color flashColor, float duration = 0.2f)
-    {
-        StopAllCoroutines();
-        StartCoroutine(FlashCoroutine(flashColor, duration));
-    }
-
-    private System.Collections.IEnumerator FlashCoroutine(Color flashColor, float duration)
-    {
-        Color startColor = slotImage.color;
-        slotImage.color = flashColor;
-        yield return new WaitForSeconds(duration);
-        slotImage.color = startColor;
-    }
 }

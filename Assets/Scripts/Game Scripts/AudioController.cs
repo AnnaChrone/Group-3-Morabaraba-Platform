@@ -30,60 +30,72 @@ public class AudioController : MonoBehaviour
         Instance = this;
     }
 
+    //Allows Awake() to be called for testing purposes
+    public void InitializeForTesting()
+    {
+        Awake();
+    }
+
     public void PlayAudio(string AudioClip)
     {
-        switch (AudioClip)
+        if (string.IsNullOrEmpty(AudioClip))
         {
-            case "Select":
-                UIAudioPlayer.PlayOneShot(SelectSound);
+            Debug.LogWarning("Audio clip name is null or empty");
+            return;  // Early return to prevent NullReferenceException
+        }
+
+        switch (AudioClip.ToLower()) //ensures it does not need to be case sensitive
+        {
+            case "select":
+                UIAudioPlayer?.PlayOneShot(SelectSound);
                 Debug.Log("Playing SELECT from AudioController");
                 break;
-            case "Place":
-                UIAudioPlayer.PlayOneShot(PlaceSound);
-                Debug.Log("Playing Place from AudioController");
+            case "place":
+                UIAudioPlayer?.PlayOneShot(PlaceSound);
+                Debug.Log("Playing PLACE from AudioController");
                 break;
-            case "Move":
-                UIAudioPlayer.PlayOneShot(MoveSound);
+            case "move":
+                UIAudioPlayer?.PlayOneShot(MoveSound);
                 Debug.Log("Playing MOVE from AudioController");
                 break;
-            case "FormMill":
-                UIAudioPlayer.PlayOneShot(FormMillSound);
+            case "formmill":
+                UIAudioPlayer?.PlayOneShot(FormMillSound);
                 Debug.Log("Playing FORMMILL from AudioController");
                 break;
-            case "BreakMill":
-                UIAudioPlayer.PlayOneShot(BreakMillSound);
+            case "breakmill":
+                UIAudioPlayer?.PlayOneShot(BreakMillSound);
                 Debug.Log("Playing BREAKMILL from AudioController");
                 break;
-            case "Capture":
-                UIAudioPlayer.PlayOneShot(CaptureSound);
+            case "capture":
+                UIAudioPlayer?.PlayOneShot(CaptureSound);
                 Debug.Log("Playing CAPTURE from AudioController");
                 break;
-            case "Win":
-                UIAudioPlayer.PlayOneShot(WinSound);
+            case "win":
+                UIAudioPlayer?.PlayOneShot(WinSound);
                 Debug.Log("Playing WIN from AudioController");
                 break;
-            case "Loss":
-                UIAudioPlayer.PlayOneShot(LossSound);
+            case "loss":
+                UIAudioPlayer?.PlayOneShot(LossSound);
                 Debug.Log("Playing LOSS from AudioController");
                 break;
-            case "Draw":
-                UIAudioPlayer.PlayOneShot(DrawSound);
+            case "draw":
+                UIAudioPlayer?.PlayOneShot(DrawSound);
                 Debug.Log("Playing DRAW from AudioController");
                 break;
-            case "Rewind":
-                UIAudioPlayer.PlayOneShot(RewindSound);
+            case "rewind":
+                UIAudioPlayer?.PlayOneShot(RewindSound);
                 Debug.Log("Playing REWIND from AudioController");
                 break;
-            case "Fly":
-                UIAudioPlayer.PlayOneShot(FlyingSound);
+            case "fly":
+                UIAudioPlayer?.PlayOneShot(FlyingSound);
                 Debug.Log("Playing FLY from AudioController");
                 break;
-            case "Invalid":
-                UIAudioPlayer.PlayOneShot(InvalidMoveSound);
+            case "invalid":
+                UIAudioPlayer?.PlayOneShot(InvalidMoveSound);
                 Debug.Log("Playing INVALID from AudioController");
                 break;
             default:
-                Console.WriteLine("Unknown Audio request.");
+                Debug.LogWarning($"Unknown audio request: {AudioClip}");
                 break;
         }
     }

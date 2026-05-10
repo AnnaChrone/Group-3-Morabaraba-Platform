@@ -24,7 +24,6 @@ public static class GameSettings
         }
     }
 
-    // Optional: Reset settings when returning to main menu
     public static void ResetToDefaults()
     {
         _gameType = "Morabaraba";
