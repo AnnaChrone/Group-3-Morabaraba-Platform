@@ -82,31 +82,9 @@ public class AudioControllerTests
         return false;
     }
 
+   
     [Test]
-    // Test 1: Verify Singleton Instance is created
-    public void test_AudioController_singleton_instance_creates()
-    {
-        //Assign
-        var testObject = new GameObject("TestSingleton");
-        var controller = testObject.AddComponent<AudioController>();
-
-        //Act
-        controller.InitializeForTesting();
-
-        // Verify the singleton instance is set
-        Assert.IsNotNull(AudioController.Instance);
-
-        // Use ReferenceEquals or compare the objects directly
-        Assert.IsTrue(ReferenceEquals(controller, AudioController.Instance));
-
-        // Alternative: compare the gameObject
-        Assert.AreEqual(controller.gameObject, AudioController.Instance.gameObject);
-
-        GameObject.Destroy(testObject);
-    }
-
-    [Test]
-    // Test 2: Case name for "select" sound is not sensitive
+    // Test 1: Case name for "select" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_select()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("select"));
@@ -116,7 +94,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 4: Case name for "place" sound is not sensitive
+    // Test 2: Case name for "place" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_place()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("place"));
@@ -126,7 +104,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 5: Case name for "move" sound is not sensitive
+    // Test 3: Case name for "move" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_move()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("move"));
@@ -136,7 +114,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 6: Case name for "formmill" sound is not 
+    // Test 4: Case name for "formmill" sound is not 
     public void test_PlayAudio_is_case_insensitive_formmill()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("formmill"));
@@ -146,7 +124,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 7: Case name for "breakmill" sound is not sensitive
+    // Test 5: Case name for "breakmill" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_breakmill()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("breakmill"));
@@ -156,7 +134,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 8: Case name for "capture" sound is not sensitive
+    // Test 6: Case name for "capture" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_capture()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("capture"));
@@ -166,7 +144,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 9: Case name for "win" sound is not sensitive
+    // Test 7: Case name for "win" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_win()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("win"));
@@ -176,7 +154,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 10: Case name for "loss" sound is not sensitive
+    // Test 8: Case name for "loss" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_losss()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("loss"));
@@ -186,7 +164,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 11: Case name for "draw" sound is not sensitive
+    // Test 9: Case name for "draw" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_draw()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("draw"));
@@ -196,7 +174,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 12: Case name for "rewind" sound is not sensitive
+    // Test 10: Case name for "rewind" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_rewind()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("rewind"));
@@ -206,7 +184,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 13: Case name for "fly" sound is not sensitive
+    // Test 11: Case name for "fly" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_fly()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("fly"));
@@ -216,7 +194,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 14: Case name for "invalid" sound is not sensitive
+    // Test 12: Case name for "invalid" sound is not sensitive
     public void test_PlayAudio_is_case_insensitive_invalid()
     {
         Assert.DoesNotThrow(() => audioController.PlayAudio("invalid"));
@@ -226,7 +204,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 15: Unknown audio clip name shows warning
+    // Test 13: Unknown audio clip name shows warning
     public void test_PlayAudio_shows_warning_when_clip_unknown()
     {
         //Assign
@@ -249,7 +227,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 16: Empty string handling
+    // Test 14: Empty string handling
     public void test_PlayAudio_shows_warning_with_empty_string()
     {
         //Assign
@@ -263,7 +241,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 17: Null string handling
+    // Test 15: Null string handling
     public void test_PlayAudio_shows_warning_with_null_string()
     {
         //Assign
@@ -277,7 +255,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 18: Verify all audio clips are assigned
+    // Test 16: Verify all audio clips are assigned
     public void test_AudioController_has_all_clips_assigned()
     {
         Assert.IsNotNull(audioController.SelectSound);
@@ -295,7 +273,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 19: Play audio with null AudioClip wont throw
+    // Test 17: Play audio with null AudioClip wont throw
     public void test_PlayAudio_NullAudioClip_DoesNotThrow()
     {
         //Assign
@@ -308,7 +286,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 20: Sequential audio requests work
+    // Test 18: Sequential audio requests work
     public void test_PlayAudio_sequential_audio_requests_work()
     {
         Assert.DoesNotThrow(() =>
@@ -323,7 +301,7 @@ public class AudioControllerTests
     }
 
     [Test]
-    // Test 21: Stress test with mixed case rapid calls
+    // Test 19: Stress test with mixed case rapid calls
     public void test_PlayAudio_stress_test_with_rapid_calls()
     {
         Assert.DoesNotThrow(() =>

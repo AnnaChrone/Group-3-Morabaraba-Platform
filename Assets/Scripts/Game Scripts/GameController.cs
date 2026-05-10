@@ -167,7 +167,6 @@ public class GameController : NetworkBehaviour
     private float lastPauseRequestTime = 0f;
     private const float PAUSE_COOLDOWN = 0.5f;
     public GameObject pausePanel;
-  //  public TextMeshProUGUI pauseStatusText;
     public Button forfeitButton;
     public Button rulesButton;
     public Button closeGameButton;
@@ -212,6 +211,13 @@ public class GameController : NetworkBehaviour
 
         LoadGameTypeData();
     }
+
+    //Allows Awake() to be called for testing purposes
+    public void InitializeAwakeForTesting()
+    {
+        Awake();
+    }
+
     void Update()
     {
         if (IsServer && IsGamePaused.Value && pauseStartTime > 0)
@@ -311,13 +317,13 @@ public class GameController : NetworkBehaviour
             }
         }
     }
-    //INITIALIZATION
 
-    void OnEnable()
+    private void OnEnable()
     {
-        SetButtonsInteractable(false);
-        // Register pause callback
-        IsGamePaused.OnValueChanged += OnPauseStateChanged;
+        if (allSlots == null)
+            return;
+
+        SetButtonsInteractable(true);
     }
 
     public override void OnNetworkSpawn()
@@ -401,12 +407,19 @@ public class GameController : NetworkBehaviour
         UpdateRewindUI();
     }
 
-    void SetButtonsInteractable(bool enabled)
+    public void SetButtonsInteractable(bool enabled)
     {
-        foreach (var slot in allSlots)
+        // Prevent null reference during tests/startup
+        if (allSlots == null || allSlots.Length == 0)
+            return;
+
+        foreach (SlotID slot in allSlots)
         {
-            var btn = slot.GetComponent<UnityEngine.UI.Button>();
-            if (btn != null) btn.interactable = enabled;
+            if (slot == null)
+                continue;
+
+            // Disable the component itself
+            slot.enabled = enabled;
         }
     }
 
@@ -435,6 +448,13 @@ public class GameController : NetworkBehaviour
         gameType = GameSettings.GameType;   
         Invoke(nameof(SetNames), 1f);
     }
+
+    //Allows Start() to be called for testing purposes
+    public void InitializeStartForTesting()
+    {
+        Awake();
+    }
+
 
     void SetNames()
     {
@@ -568,7 +588,7 @@ public class GameController : NetworkBehaviour
     }
 
     //Serverside game logic
-    void ServerHandlePlacing(SlotID slot)
+    public void ServerHandlePlacing(SlotID slot)
     {
         if (GetSlotOwner(slot.slotNumber) != 0) return;
         SaveSnapshot(); //stores snapshot per turn
@@ -709,19 +729,21 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    bool IsValidMove(SlotID from, SlotID to, int player)
+    public bool IsValidMove(SlotID from, SlotID to, int player)
     {
         if (GetSlotOwner(to.slotNumber) != 0) return false;
 
-        int piecesOnBoard = (player == 1) ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value;
+        bool isFlying =
+            CurrentPhase.Value == GamePhase.Moving &&
+            ((player == 1 ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value) <= 3);
 
-        if (piecesOnBoard <= 3)
+        if (isFlying)
             return true;
 
         return IsAdjacent(from, to);
     }
 
-    void ServerHandleCapturing(SlotID slot)
+    public void ServerHandleCapturing(SlotID slot)
     {
         int opponent = (CurrentPlayer.Value == 1) ? 2 : 1;
         if (GetSlotOwner(slot.slotNumber) != opponent) return;
@@ -777,7 +799,7 @@ public class GameController : NetworkBehaviour
             slot.ClearSlot(); // This handles resetting occupancy and color
         }
     }
-    void EndTurn()
+    public void EndTurn()
     {
         // Clear selected slot highlight if one exists
         if (SelectedSlot.Value != 0)
@@ -928,14 +950,14 @@ public class GameController : NetworkBehaviour
 
     //Slot State Management
 
-    void SetSlotOwner(int slotNumber, int player)
+    public void SetSlotOwner(int slotNumber, int player)
     {
         var states = ParseSlotStates();
         states[slotNumber] = player;
         SlotStates.Value = SerializeSlotStates(states);
     }
 
-    int GetSlotOwner(int slotNumber)
+    public int GetSlotOwner(int slotNumber)
     {
         var states = ParseSlotStates();
         return states.TryGetValue(slotNumber, out int owner) ? owner : 0;
@@ -1002,7 +1024,7 @@ public class GameController : NetworkBehaviour
 
     //Mill and Win Logic
 
-    bool CheckMill(int slotNumber, int player)
+   public bool CheckMill(int slotNumber, int player)
     {
         Debug.Log($"=== CHECK MILL CALLED ===");
         Debug.Log($"Slot: {slotNumber}, Player: {player}");
@@ -1046,7 +1068,10 @@ public class GameController : NetworkBehaviour
                     var slot = GetSlotByNumber(s);
                     if (slot != null) slot.SetMillStatus(true);
                 }
-                PlaySoundClientRpc("FormMill");
+                if (IsSpawned && NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+                {
+                    PlaySoundClientRpc("FormMill");
+                }
                 return true;
             }
         }
@@ -1076,7 +1101,7 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    void UpdateAllMills()
+    public void UpdateAllMills()
     {
         if (allSlots == null) return;
 
@@ -1116,7 +1141,7 @@ public class GameController : NetworkBehaviour
         }
     }
 
-    bool OpponentHasFreePiece(int opponent)
+    public bool OpponentHasFreePiece(int opponent)
     {
         if (allSlots == null) return false;
 
@@ -1128,7 +1153,7 @@ public class GameController : NetworkBehaviour
         return false;
     }
 
-    bool HasWon()
+    public bool HasWon()
     {
         int opponent = (CurrentPlayer.Value == 1) ? 2 : 1;
         int opponentPieces = (opponent == 1) ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value;
@@ -1308,7 +1333,7 @@ public class GameController : NetworkBehaviour
     
 
     //Rewind Functions
-    void SaveSnapshot()
+    public void SaveSnapshot()
     {
         GameSnapshot snapshot = new GameSnapshot()
         {
@@ -1585,7 +1610,7 @@ public class GameController : NetworkBehaviour
     }
 
 
-    string FormatTime(float t)
+     public string FormatTime(float t)
     {
         if (t < 0) t = 0;
         int minutes = Mathf.FloorToInt(t / 60f);
@@ -1913,9 +1938,9 @@ public class GameController : NetworkBehaviour
     }
 
     //Helper Functions
-    SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);
-    bool IsAdjacent(SlotID from, SlotID to) => adjacency[from.slotNumber].Contains(to.slotNumber);
-    bool HasAnyCapturablePiece(int opponent)
+    public SlotID GetSlotByNumber(int number) => allSlots.FirstOrDefault(s => s.slotNumber == number);
+    public bool IsAdjacent(SlotID from, SlotID to) => adjacency[from.slotNumber].Contains(to.slotNumber);
+    public bool HasAnyCapturablePiece(int opponent)
     {
         if (allSlots == null) return false;
 
@@ -1966,7 +1991,7 @@ public class GameController : NetworkBehaviour
             }
         }
     }
-    void HardcodeGameData()
+    public void HardcodeGameData()
     {
         string gameType = GameSettings.GameType;
 
