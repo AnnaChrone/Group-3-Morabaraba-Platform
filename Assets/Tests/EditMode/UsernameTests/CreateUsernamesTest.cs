@@ -1,23 +1,24 @@
 using UnityEngine;
 using NUnit.Framework;
 
-public class CreateUsernameTest 
-{private CreateUsername script;
+public class CreateUsernamesTest 
+{
+    private CreateUsername script;
 
-    [SetUp] //Get validation function from Create Username script
+    [SetUp] //Get validation from create username script
     public void Setup()
     {
         GameObject obj = new GameObject();
         script = obj.AddComponent<CreateUsername>();
     }
-
-    [Test] //Test header allows it to be tested properly by the software and get the results
+    //Test cases with specific input - should all pass
+    [Test]
     public void EmptyUsername_ReturnsFalse()
     {
         bool result = script.isValidUsername("", out string error);
 
         Assert.IsFalse(result);
-        Assert.AreEqual("Please enter a username", error); //Compares errror messages
+        Assert.AreEqual("Please enter a username", error);
     }
 
     [Test]
@@ -30,7 +31,7 @@ public class CreateUsernameTest
     }
 
     [Test]
-    public void LongUsernameWithLengthTwentyPlus_ReturnsFasle()
+    public void UsernameOverTwentyLength_ReturnsFalse()
     {
         bool result = script.isValidUsername("abcdefghijklmnopqrstuv", out string error);
 
@@ -47,4 +48,20 @@ public class CreateUsernameTest
         Assert.AreEqual("", error);
     }
 
+    [Test]
+    public void PasswordWithoutUppercase_ReturnsFalse()
+    {
+        bool result = script.isValidPassword("password1!", out string error);
+
+        Assert.IsFalse(result);
+        Assert.AreEqual("Password needs an uppercase letter", error);
+    }
+
+    [Test]
+    public void ValidPassword_ReturnsTrue()
+    {
+        bool result = script.isValidPassword("Password1!", out string error);
+
+        Assert.IsTrue(result);
+    }
 }

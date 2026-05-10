@@ -1,10 +1,11 @@
 using UnityEngine;
 using NUnit.Framework;
-public class CreatePasswordTests 
+
+public class CreatePasswordTest 
 {
     private CreateUsername script;
 
-    [SetUp]
+    [SetUp] //Get validation from create username script
     public void Setup()
     {
         GameObject obj = new GameObject();
@@ -17,19 +18,19 @@ public class CreatePasswordTests
         bool result = script.isValidPassword("", out string error);
 
         Assert.IsFalse(result);
-        Assert.AreEqual("Please enter a password", error);
+        Assert.AreEqual("Please enter a password", error); //Compares error messages
     }
 
     [Test]
-    public void ShortPassword_ReturnsFalse()
+    public void PasswordUnderEightLength_ReturnsFalse()
     {
-        bool result = script.isValidPassword("Kiri!2", out string error);
+        bool result = script.isValidPassword("Kiri1!", out string error);
 
         Assert.IsFalse(result);
-        Assert.AreEqual("Password must be 8 characters or more", error);
+        Assert.AreEqual("Password must be 8 characters or more", error); 
     }
 
-     [Test]
+    [Test]
     public void PasswordWithoutUppercase_ReturnsFalse()
     {
         bool result = script.isValidPassword("password1!", out string error);
@@ -39,10 +40,10 @@ public class CreatePasswordTests
     }
 
     [Test]
-    public void PasswordWithoutLowerCase_ReturnsFalse()
+    public void PasswordWithoutLowercase_ReturnsFalse()
     {
         bool result = script.isValidPassword("PASSWORD1!", out string error);
-            
+
         Assert.IsFalse(result);
         Assert.AreEqual("Password needs a lowercase letter", error);
     }
@@ -50,8 +51,8 @@ public class CreatePasswordTests
     [Test]
     public void PasswordWithoutNumber_ReturnsFalse()
     {
-        bool result = script.isValidPassword("PasswordD!!", out string error);
-            
+        bool result = script.isValidPassword("Password!!", out string error);
+
         Assert.IsFalse(result);
         Assert.AreEqual("Password needs a number", error);
     }
@@ -59,8 +60,8 @@ public class CreatePasswordTests
     [Test]
     public void PasswordWithoutSpecialCharacter_ReturnsFalse()
     {
-        bool result = script.isValidPassword("PasswordD11", out string error);
-            
+        bool result = script.isValidPassword("Password11", out string error);
+
         Assert.IsFalse(result);
         Assert.AreEqual("Password needs a special character", error);
     }
@@ -73,4 +74,3 @@ public class CreatePasswordTests
         Assert.IsTrue(result);
     }
 }
-
