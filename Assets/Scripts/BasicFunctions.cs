@@ -9,7 +9,12 @@ public class BasicFunctions : MonoBehaviour
 
     // Reference to GameController
     private GameController gameController;
+    private bool isTestMode = false;
 
+    public void SetTestMode(bool value) //ensures playmode wont be killed during testing
+    {
+        isTestMode = value;
+    }
     void Start()
     {
         // Find GameController in the scene
@@ -52,11 +57,15 @@ public class BasicFunctions : MonoBehaviour
 
     private void PerformQuit()
     {
+        if (isTestMode)
+            return;
+
         Application.Quit();
 
-#if UNITY_EDITOR
+/*#if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
-#endif
+#endif*/
+//PLEASE NOTE, COMMENTED OUT SO AS TO PRESERVE TESTING, FOR FULL GAME FUNCTIONALITY, UNCOMMENT
     }
 
     public void onClose()
