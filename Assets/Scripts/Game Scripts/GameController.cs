@@ -9,36 +9,34 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [System.Serializable]
-public class GameSnapshot //This allows for the rewind function to work
+public class GameSnapshot //This class allows for the rewind function to work
 {
     public int currentPlayer;
     public int placementCounter;
 
     public int player1Pieces;
     public int player2Pieces;
-
     public int player1Captures;
     public int player2Captures;
 
     public GamePhase phase;
 
     public int selectedSlot;
-
     public string slotStates;
 }
 public class GameController : NetworkBehaviour
 {
     public NetworkVariable<float> TotalGameTime = new NetworkVariable<float>(
-    0,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server
-);
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     public NetworkVariable<int> CurrentPlayer = new NetworkVariable<int>(
-    1,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server
-);
+        1,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     public NetworkVariable<int> PlacementCounter = new NetworkVariable<int>(
         0,
@@ -77,20 +75,26 @@ public class GameController : NetworkBehaviour
     );
 
     public NetworkVariable<int> Player1CapturesCount = new NetworkVariable<int>(
-    0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     public NetworkVariable<int> Player2CapturesCount = new NetworkVariable<int>(
-        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
-    // Track slot ownership: slotNumber -> playerID (0 = empty)
+    // Tracks slot Ownership
     public NetworkVariable<FixedString4096Bytes> SlotStates = new NetworkVariable<FixedString4096Bytes>("");
 
-    //Rewind Variabe counters
+    //Rewind Variable counters
     public NetworkVariable<int> Player1Rewinds = new NetworkVariable<int>(
-    3,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server
-);
+        3,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     public NetworkVariable<int> Player2Rewinds = new NetworkVariable<int>(
         3,
@@ -158,7 +162,7 @@ public class GameController : NetworkBehaviour
 
     [Header("Timers")]
     private float lastTimerUpdate = 0f;
-    private const float TIMER_UPDATE_INTERVAL = 0.1f; // Update UI 10 times per second
+    private const float TIMER_UPDATE_INTERVAL = 0.1f; 
     public TextMeshProUGUI TimerUI;
     private float player1Time;
     private float player2Time;
@@ -172,6 +176,8 @@ public class GameController : NetworkBehaviour
     public Button closeGameButton;
     private bool isLocallyPaused = false;
 
+    private string gameType;
+    int localPlayerId;
     public enum TimerMode
     {
         None,
@@ -199,15 +205,13 @@ public class GameController : NetworkBehaviour
     //rewind functionality
     private List<GameSnapshot> gameHistory = new List<GameSnapshot>();
 
-    
-
     void Awake()
     {
         if (loadingPanel != null)
             loadingPanel.SetActive(true);
 
         if (loadingText != null)
-            loadingText.text = "Initializing Network...";
+            loadingText.text = "Initializing Network";
 
         LoadGameTypeData();
     }
@@ -233,15 +237,6 @@ public class GameController : NetworkBehaviour
         // Don't process game logic if paused
         if (IsGamePaused.Value)
             return;
-
-        // Check for pause key (Escape)
-        if (Input.GetKeyDown(KeyCode.Escape) && !GameEnded.Value && IsSpawned)
-        {
-            if (IsGamePaused.Value)
-                RequestResume();
-            else
-                RequestPause();
-        }
 
         if (!IsSpawned || !networkReady || GameEnded.Value || !timerRunning)
             return;
@@ -286,15 +281,13 @@ public class GameController : NetworkBehaviour
                 }
             }
 
-            // Send timer updates to clients periodically
+            // Send timer updates to clients
             if (timerAcc >= TIMER_UPDATE_INTERVAL)
             {
                 timerAcc = 0f;
                 UpdateTimerClientRpc(gameTimeRemaining, turnTimeRemaining, timerMode);
             }
-        }
-
-        
+        } 
     }
 
     [ClientRpc]
@@ -329,16 +322,12 @@ public class GameController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
-        Debug.Log($"=== OnNetworkSpawn START ===");
         Debug.Log($"totalSlots: {totalSlots}, piecesPerPlayer: {piecesPerPlayer}");
-        Debug.Log($"adjacency null? {adjacency == null}, mills null? {mills == null}");
 
         // Read current settings
         string gameType = GameSettings.GameType;
         string gameTimeSetting = GameSettings.GameTime;
 
-        Debug.Log($"=== GAMECONTROLLER ONNETWORKSPAWN ===");
         Debug.Log($"Game Type from settings: {gameType}");
         Debug.Log($"Game Time from settings: {gameTimeSetting}");
         Debug.Log($"IsServer: {IsServer}");
@@ -358,7 +347,6 @@ public class GameController : NetworkBehaviour
         Player2CapturesCount.OnValueChanged += OnCaptureChanged;
         Player1Rewinds.OnValueChanged += OnRewindChanged;
         Player2Rewinds.OnValueChanged += OnRewindChanged;
-        TotalGameTime.OnValueChanged += OnTotalGameTimeChanged;
         IsGamePaused.OnValueChanged += OnPauseStateChanged;
         SelectedSlot.OnValueChanged += OnSelectedSlotChanged;
 
@@ -374,21 +362,30 @@ public class GameController : NetworkBehaviour
 
         StartCoroutine(FinishLoading());
     }
+
+    public override void OnNetworkDespawn()
+    {
+        CurrentPlayer.OnValueChanged -= OnCurrentPlayerChanged;
+        PlacementCounter.OnValueChanged -= OnPlacementCounterChanged;
+        CurrentPhase.OnValueChanged -= OnPhaseChanged;
+        SlotStates.OnValueChanged -= OnSlotStatesChanged;
+        Player1CapturesCount.OnValueChanged -= OnCaptureChanged;
+        Player2CapturesCount.OnValueChanged -= OnCaptureChanged;
+        Player1Rewinds.OnValueChanged -= OnRewindChanged;
+        Player2Rewinds.OnValueChanged -= OnRewindChanged;
+        IsGamePaused.OnValueChanged -= OnPauseStateChanged;
+        base.OnNetworkDespawn();
+    }
     void LoadGameTypeData()
     {
-        HardcodeGameData(); // Just uses hardcoded data directly
+        HardcodeGameData();
     }
-
-    void OnTotalGameTimeChanged(float oldVal, float newVal)
-    {
-        // Optional: Update UI if needed
-    }
-
 
     void OnCaptureChanged(int oldVal, int newVal)
     {
         UpdatePiecesToPlaceUI();
     }
+
     System.Collections.IEnumerator FinishLoading()
     {
         yield return null;
@@ -409,7 +406,7 @@ public class GameController : NetworkBehaviour
 
     public void SetButtonsInteractable(bool enabled)
     {
-        // Prevent null reference during tests/startup
+        // Prevents null reference during tests/startup
         if (allSlots == null || allSlots.Length == 0)
             return;
 
@@ -418,31 +415,12 @@ public class GameController : NetworkBehaviour
             if (slot == null)
                 continue;
 
-            // Disable the component itself
             slot.enabled = enabled;
         }
     }
 
-    public override void OnNetworkDespawn()
-    {
-        CurrentPlayer.OnValueChanged -= OnCurrentPlayerChanged;
-        PlacementCounter.OnValueChanged -= OnPlacementCounterChanged;
-        CurrentPhase.OnValueChanged -= OnPhaseChanged;
-        SlotStates.OnValueChanged -= OnSlotStatesChanged;
-        Player1CapturesCount.OnValueChanged -= OnCaptureChanged;
-        Player2CapturesCount.OnValueChanged -= OnCaptureChanged;
-        Player1Rewinds.OnValueChanged -= OnRewindChanged;
-        Player2Rewinds.OnValueChanged -= OnRewindChanged;
-        TotalGameTime.OnValueChanged -= OnTotalGameTimeChanged;
-        IsGamePaused.OnValueChanged -= OnPauseStateChanged;
-        base.OnNetworkDespawn();
-    }
-
-    private string gameType;
     void Start()
     {
-        Debug.Log($"GameController Start() | IsListening: {NetworkManager.Singleton?.IsListening}");
-        Debug.Log($"GameController IsSpawned: {IsSpawned}");
         Debug.Log($"NetworkManager active: {NetworkManager.Singleton != null}");
         Debug.Log($"Current GameSettings - Type: {GameSettings.GameType}, Time: {GameSettings.GameTime}");
         gameType = GameSettings.GameType;   
@@ -454,7 +432,6 @@ public class GameController : NetworkBehaviour
     {
         Awake();
     }
-
 
     void SetNames()
     {
@@ -500,7 +477,6 @@ public class GameController : NetworkBehaviour
     }
 
     //Input Handling
-
     public void OnSlotClicked(SlotID slot)
     {
         Debug.Log($"[CLIENT] OnSlotClicked called for Slot {slot.slotNumber}");
@@ -519,7 +495,7 @@ public class GameController : NetworkBehaviour
 
         if (GameEnded.Value)
         {
-            Debug.LogWarning(" Game has ended!");
+            Debug.LogWarning("Game has ended!");
             return;
         }
 
@@ -527,7 +503,7 @@ public class GameController : NetworkBehaviour
 
         if (!isMyTurn)
         {
-            Debug.LogWarning(" Not your turn!");
+            Debug.LogWarning("Not your turn!");
             return;
         }
 
@@ -535,7 +511,7 @@ public class GameController : NetworkBehaviour
 
         Debug.Log($" [CLIENT] RPC CALLED SUCCESSFULLY");
     }
-    int localPlayerId;
+
     bool IsLocalPlayerTurn()
     {
         if (!NetworkManager.Singleton) return false;
@@ -546,12 +522,10 @@ public class GameController : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     private void RequestMoveServerRpc(int slotNumber, GamePhase phase, ServerRpcParams rpcParams = default)
     {
-        Debug.Log($"📡 SERVER RECEIVED RPC from Client {rpcParams.Receive.SenderClientId}");
+        Debug.Log($"SERVER RECEIVED RPC from Client {rpcParams.Receive.SenderClientId}");
 
         ulong senderClientId = rpcParams.Receive.SenderClientId;
         int requestingPlayer = (senderClientId == 0) ? 1 : 2;
-
-        Debug.Log($"Validation: CurrentPlayer={CurrentPlayer.Value}, RequestingPlayer={requestingPlayer}");
 
         if (CurrentPlayer.Value != requestingPlayer)
         {
@@ -567,8 +541,6 @@ public class GameController : NetworkBehaviour
         }
 
         Debug.Log($"Processing move for Slot {slotNumber} in Phase {phase}");
-
-        
 
         switch (phase)
         {
@@ -637,7 +609,6 @@ public class GameController : NetworkBehaviour
     {
         int currentPlayer = CurrentPlayer.Value;
 
-
         if (SelectedSlot.Value == 0)
         {
             if (GetSlotOwner(slot.slotNumber) != currentPlayer)
@@ -655,7 +626,7 @@ public class GameController : NetworkBehaviour
             PlaySoundClientRpc("Invalid");
             SelectedSlot.Value = 0;
 
-            // Restore the proper color (respecting mill status)
+            // Restore the proper color
             if (fromSlot.isInMill)
                 fromSlot.slotUI.HighlightMill(currentPlayer);
             else
@@ -733,8 +704,7 @@ public class GameController : NetworkBehaviour
     {
         if (GetSlotOwner(to.slotNumber) != 0) return false;
 
-        bool isFlying =
-            CurrentPhase.Value == GamePhase.Moving &&
+        bool isFlying = CurrentPhase.Value == GamePhase.Moving &&
             ((player == 1 ? Player1PiecesOnBoard.Value : Player2PiecesOnBoard.Value) <= 3);
 
         if (isFlying)
@@ -760,7 +730,7 @@ public class GameController : NetworkBehaviour
         // Clear the captured piece
         SetSlotOwner(slot.slotNumber, 0);
 
-        // EXPLICITLY clear the visual on all clients
+        //clear the visual on all clients
         ClearSlotVisualClientRpc(slot.slotNumber);
 
         if (CurrentPlayer.Value == 1)
@@ -796,7 +766,7 @@ public class GameController : NetworkBehaviour
         var slot = GetSlotByNumber(slotNumber);
         if (slot != null)
         {
-            slot.ClearSlot(); // This handles resetting occupancy and color
+            slot.ClearSlot(); 
         }
     }
     public void EndTurn()
@@ -839,7 +809,6 @@ public class GameController : NetworkBehaviour
             ResetTurnTimer();
         }
     }
-
     void OnSelectedSlotChanged(int oldVal, int newVal)
     {
         UpdateSelectionHighlight(oldVal, newVal);
@@ -868,9 +837,7 @@ public class GameController : NetworkBehaviour
     }
 
     [ClientRpc]
-    void GameOverClientRpc(int winner, string winReason, string lossReason,
-                       float totalGameTime,
-                       int player1Caps, int player2Caps)
+    void GameOverClientRpc(int winner, string winReason, string lossReason,float totalGameTime,int player1Caps, int player2Caps)
     {
         Debug.Log($"GAME OVER: Player {winner} wins!");
         Debug.Log($"Total Game Time: {FormatTime(totalGameTime)}, P1 Caps: {player1Caps}, P2 Caps: {player2Caps}");
@@ -949,7 +916,6 @@ public class GameController : NetworkBehaviour
     }
 
     //Slot State Management
-
     public void SetSlotOwner(int slotNumber, int player)
     {
         var states = ParseSlotStates();
@@ -995,7 +961,6 @@ public class GameController : NetworkBehaviour
 
     void ApplySlotStatesToVisuals()
     {
-        // Add null check for allSlots
         if (allSlots == null || allSlots.Length == 0)
         {
             Debug.LogError("allSlots array is not assigned or empty! Please assign all slots in the Inspector.");
@@ -1012,21 +977,19 @@ public class GameController : NetworkBehaviour
                 if (owner != 0)
                     slot.SetOccupant(owner);
                 else
-                    slot.ClearSlot();  // clears empty slots!
+                    slot.ClearSlot(); 
             }
             else
             {
-                slot.ClearSlot();  // Also clear if not found in states
+                slot.ClearSlot();
             }
         }
         UpdateAllMills();
     }
 
     //Mill and Win Logic
-
    public bool CheckMill(int slotNumber, int player)
     {
-        Debug.Log($"=== CHECK MILL CALLED ===");
         Debug.Log($"Slot: {slotNumber}, Player: {player}");
         Debug.Log($"Mills count: {mills?.Count ?? 0}");
 
@@ -1077,7 +1040,6 @@ public class GameController : NetworkBehaviour
         }
         return false;
     }
-
     void CheckBrokenMills(int player)
     {
         foreach (var mill in mills)
@@ -1310,7 +1272,6 @@ public class GameController : NetworkBehaviour
             return;
         }
 
-        //CurrentTurnIndicator.text = $"Player {CurrentPlayer.Value} Turn - {CurrentPhase.Value}";
         var names = UIManager.Instance.GetPlayerDisplayNames();
         if (CurrentPlayer.Value == 1)
         {
@@ -1327,10 +1288,8 @@ public class GameController : NetworkBehaviour
     void OnPlacementCounterChanged(int oldVal, int newVal)
     {
         UpdateTurnIndicator();
-        UpdatePiecesToPlaceUI(); // THis is what updates clients
+        UpdatePiecesToPlaceUI();
     }
-
-    
 
     //Rewind Functions
     public void SaveSnapshot()
@@ -1473,10 +1432,7 @@ public class GameController : NetworkBehaviour
 
         Debug.Log($"Player {requestingPlayer} used rewind.");
 
-        // Play sound for all players
         PlaySoundClientRpc("Rewind");
-
-        // Show rewind effect for all players
         ShowEffectClientRpc("Rewind");
     }
 
@@ -1485,12 +1441,10 @@ public class GameController : NetworkBehaviour
     {
         if (showTarget == "Rewind" && rewindEffectPanel != null)
         {
-            // Stop any ongoing coroutine on this panel
             StopCoroutine("FadeOutPanel");
             StartCoroutine(FadeOutPanel(rewindEffectPanel));
         } else if (showTarget == "Mill" && rewindEffectPanel != null)
         {
-            // Stop any ongoing coroutine on this panel
             StopCoroutine("FadeOutPanel");
             StartCoroutine(FadeOutPanel(millErrorPanel));
         }
@@ -1499,10 +1453,8 @@ public class GameController : NetworkBehaviour
 
     private System.Collections.IEnumerator FadeOutPanel(GameObject FadeTarget)
     {
-        // Activate the panel
         FadeTarget.SetActive(true);
 
-        // Set initial alpha (if using CanvasGroup)
         CanvasGroup canvasGroup = FadeTarget.GetComponent<CanvasGroup>();
         if (canvasGroup == null)
         {
@@ -1512,11 +1464,8 @@ public class GameController : NetworkBehaviour
 
         canvasGroup.alpha = 1f;
 
-
-        // Wait for 1 second
         yield return new WaitForSecondsRealtime(1f);
 
-        // Fade out over 0.5 seconds
         float fadeDuration = 0.5f;
         float elapsedTime = 0f;
 
@@ -1527,13 +1476,11 @@ public class GameController : NetworkBehaviour
             yield return null;
         }
 
-        // Deactivate the panel
         FadeTarget.SetActive(false);
         canvasGroup.alpha = 1f; // Reset alpha for next time
     }
 
     //Timer Functions
-
     void SetupTimer(string gameTimeSetting)
     {
         timerMode = TimerMode.None;
@@ -1640,7 +1587,6 @@ public class GameController : NetworkBehaviour
 
         timerRunning = false;
 
-        // Clear any selected slot first
         if (SelectedSlot.Value != 0)
         {
             ClearSelectedSlotClientRpc(SelectedSlot.Value);
@@ -1651,11 +1597,9 @@ public class GameController : NetworkBehaviour
 
         if (loserPlayerId == 0)
         {
-            // Draw by timeout - announce draw without heavy Relay operations
             float totalGameTime = Time.time - gameStartTime;
             TotalGameTime.Value = totalGameTime;
 
-            // Send draw result directly without going through ServerGameOver
             GameOverClientRpc(0, "Game ended in a draw - Time's up!", "Game ended in a draw - Time's up!",
                              totalGameTime,
                              Player1CapturesCount.Value, Player2CapturesCount.Value);
@@ -1669,13 +1613,11 @@ public class GameController : NetworkBehaviour
             string winReason = loserPlayerId == 1 ? "Opponent ran out of time!" : "Opponent ran out of time!";
             string lossReason = loserPlayerId == 1 ? "You ran out of time!" : "You ran out of time!";
 
-            // Send game over result directly
             GameOverClientRpc(winner, winReason, lossReason,
                              totalGameTime,
                              Player1CapturesCount.Value, Player2CapturesCount.Value);
         }
 
-        // Optionally disable timer updates
         timerRunning = false;
     }
 
@@ -1685,14 +1627,11 @@ public class GameController : NetworkBehaviour
 
         if (pause)
         {
-            // Show pause panel (you need to add a reference to a pause panel UI)
             if (pausePanel != null)
                 pausePanel.SetActive(true);
 
-            // Disable user input on clicking slots
             SetButtonsInteractable(false);
 
-            // Disable rewind button
             if (rewindButton != null)
                 rewindButton.interactable = false;
 
@@ -1704,10 +1643,8 @@ public class GameController : NetworkBehaviour
             if (pausePanel != null)
                 pausePanel.SetActive(false);
 
-            // Re-enable input based on current game state
             SetButtonsInteractable(true);
 
-            // Re-enable rewind button if conditions are met
             if (rewindButton != null && IsLocalPlayerTurn() && !GameEnded.Value)
             {
                 int rewindsLeft = localPlayerId == 1 ? Player1Rewinds.Value : Player2Rewinds.Value;
@@ -1722,7 +1659,6 @@ public class GameController : NetworkBehaviour
 
     void UpdateSelectionHighlight(int oldSlot, int newSlot)
     {
-        // clear old highlight - restore original color
         if (oldSlot != 0)
         {
             var old = GetSlotByNumber(oldSlot);
@@ -1733,7 +1669,7 @@ public class GameController : NetworkBehaviour
                 {
                     int owner = GetSlotOwner(oldSlot);
                     if (owner != 0)
-                        ui.SetPlayerColor(owner);  // Restore player color
+                        ui.SetPlayerColor(owner);
                     else
                         ui.ResetColor();
                 }
@@ -1764,13 +1700,6 @@ public class GameController : NetworkBehaviour
             if (pausePanel != null)
                 pausePanel.SetActive(true);
 
-            // Show who paused
-            /*if (pauseStatusText != null && PauseRequesterClientId.Value != 0)
-            {
-                int pausingPlayer = (PauseRequesterClientId.Value == 0) ? 1 : 2;
-                pauseStatusText.text = $"Game Paused by Player {pausingPlayer}\nPress Resume to continue";
-            }*/
-
             // Disable game board but keep UI buttons
             SetGameBoardInteractable(false);
 
@@ -1783,7 +1712,6 @@ public class GameController : NetworkBehaviour
             isLocallyPaused = false;
             timerRunning = true;
 
-            // Hide pause UI
             if (pausePanel != null)
                 pausePanel.SetActive(false);
 
@@ -1818,7 +1746,6 @@ public class GameController : NetworkBehaviour
         if (!IsSpawned || GameEnded.Value)
             return;
 
-        // Only the player who paused OR the server can resume
         ulong localClientId = NetworkManager.Singleton.LocalClientId;
 
         if (IsServer || PauseRequesterClientId.Value == localClientId)
@@ -1828,9 +1755,6 @@ public class GameController : NetworkBehaviour
         else
         {
             Debug.Log("Only the player who paused can resume the game");
-            /*if (pauseStatusText != null)
-                pauseStatusText.text = $"Waiting for Player {(PauseRequesterClientId.Value == 0 ? 1 : 2)} to resume...";
-       */
             }
     }
 
@@ -1844,9 +1768,6 @@ public class GameController : NetworkBehaviour
         }
 
         ulong requesterId = rpcParams.Receive.SenderClientId;
-
-        // Optional: Add vote-based pause system
-        // For now, allow any player to pause
 
         Debug.Log($"Player {requesterId} requested pause");
 
@@ -1869,7 +1790,6 @@ public class GameController : NetworkBehaviour
         ulong requesterId = rpcParams.Receive.SenderClientId;
         ulong pauseRequesterId = PauseRequesterClientId.Value;
 
-        // Allow server or the pausing player to resume
         if (IsServer || requesterId == pauseRequesterId)
         {
             Debug.Log($"Resuming game. Requested by: {requesterId}");
@@ -1877,7 +1797,6 @@ public class GameController : NetworkBehaviour
             IsGamePaused.Value = false;
             PauseRequesterClientId.Value = 0;
 
-            // Notify all clients about resume
             PauseStateChangedClientRpc(false, 0);
         }
         else
@@ -1944,7 +1863,6 @@ public class GameController : NetworkBehaviour
     {
         if (allSlots == null) return false;
 
-        // First check for non-mill pieces
         foreach (var slot in allSlots)
         {
             if (slot != null &&
@@ -1955,7 +1873,6 @@ public class GameController : NetworkBehaviour
             }
         }
 
-        // If no free pieces exist, check if they at least have mill pieces
         foreach (var slot in allSlots)
         {
             if (slot != null &&
@@ -2049,7 +1966,6 @@ public class GameController : NetworkBehaviour
     }
     void GameOver(int winner) => ServerGameOver(CurrentPlayer.Value,WinReason.text,LossReason.text);
 }
-
 public enum GamePhase
 {
     Placing,
