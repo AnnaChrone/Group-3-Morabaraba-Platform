@@ -468,12 +468,12 @@ public class UIManager : NetworkBehaviour
     {
         foreach (Transform child in hostPlayerListContainer) Destroy(child.gameObject);
 
-        for (int i = 0; i < playersInLobbyDisplay.Count && i < 3; i++)
+        for (int i = 0; i < playersInLobbyDisplay.Count && i < 2; i++)
         {
             PlayerSlots slot = Instantiate(hostPlayerSlotPrefab, hostPlayerListContainer);
             slot.Initialize(playersInLobbyDisplay[i], i + 1);
         }
-        for (int i = playersInLobbyDisplay.Count; i < 3; i++)
+        for (int i = playersInLobbyDisplay.Count; i < 2; i++)
         {
             PlayerSlots slot = Instantiate(hostPlayerSlotPrefab, hostPlayerListContainer);
             slot.Initialize("", i + 1);
@@ -485,12 +485,12 @@ public class UIManager : NetworkBehaviour
     {
         foreach (Transform child in joinPlayerListContainer) Destroy(child.gameObject);
 
-        for (int i = 0; i < playersInLobbyDisplay.Count && i < 3; i++)
+        for (int i = 0; i < playersInLobbyDisplay.Count && i < 2; i++)
         {
             PlayerSlots slot = Instantiate(joinPlayerSlotPrefab, joinPlayerListContainer);
             slot.Initialize(playersInLobbyDisplay[i], i + 1);
         }
-        for (int i = playersInLobbyDisplay.Count; i < 3; i++)
+        for (int i = playersInLobbyDisplay.Count; i < 2; i++)
         {
             PlayerSlots slot = Instantiate(joinPlayerSlotPrefab, joinPlayerListContainer);
             slot.Initialize("", i + 1);
@@ -530,7 +530,7 @@ public class UIManager : NetworkBehaviour
 
     public void SimulatePlayerJoin()
     {
-        if (playersInLobbyRaw.Count < 3)
+        if (playersInLobbyRaw.Count < 2)
         {
             int playerNum = playersInLobbyRaw.Count + 1;
             // Use proper format for simulation
@@ -715,6 +715,17 @@ public class UIManager : NetworkBehaviour
 
         Debug.Log($"Client connected: {clientId}");
 
+        if (playersInLobbyRaw.Count >= 2)
+        {
+            Debug.LogWarning($"Lobby full - rejecting client {clientId}");
+            // Optional: kick the client
+            if (NetworkManager.Singleton.ConnectedClients.TryGetValue(clientId, out var client))
+            {
+                client.PlayerObject?.GetComponent<NetworkObject>().Despawn(true);
+            }
+            return;
+        }
+
         playerSceneStates[clientId] = PlayerSceneState.InLobby;
 
         Debug.Log($"Added Client {clientId} to scene tracker");
@@ -754,6 +765,11 @@ public class UIManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     void SendUsernameServerRpc(ulong clientId, string username)
     {
+        if (playersInLobbyRaw.Count >= 2 && !playersInLobbyRaw.Any(p => p.Contains($"|CID:{clientId}")))
+        {
+            Debug.LogWarning($"Username RPC ignored - lobby full (client {clientId})");
+            return;
+        }
         string cleanName = string.IsNullOrEmpty(username) ? "Guest" : username.Trim();
         if (cleanName.Length > 20) cleanName = cleanName.Substring(0, 20);
 
