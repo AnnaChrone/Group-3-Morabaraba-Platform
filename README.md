@@ -30,6 +30,9 @@ ELEN3020A_Group3_Application_Build.zip
 
 This build can be used to run the game without opening Unity if needed.
 
+If you wish to run the Editor version of the game, please navigate to the scene "User Input" found in `Assets/Scenes` and run the game from that scene.
+**HOWEVER**, it is strongly recommended that you run the game using the provided build so as to properly experience the game.
+
 ---
 
 ## Notes
