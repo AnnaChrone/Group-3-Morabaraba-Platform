@@ -62,10 +62,11 @@ public class BasicFunctions : MonoBehaviour
 
         Application.Quit();
 
-/*#if UNITY_EDITOR
+//PLEASE NOTE, IF YOU WOULD LIKE TO RUN THE TEST CASES, COMMENTED OUT FROM #if to #endif
+#if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
-#endif*/
-//PLEASE NOTE, COMMENTED OUT SO AS TO PRESERVE TESTING, FOR FULL GAME FUNCTIONALITY, UNCOMMENT
+#endif
+
     }
 
     public void onClose()
