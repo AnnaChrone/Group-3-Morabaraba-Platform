@@ -3649,7 +3649,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Welcome To Moraboraba
+  m_text: Welcome To Morabaraba
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 872ab76d90efbc449990add8c1ca5059, type: 2}
   m_sharedMaterial: {fileID: -2050847696049269882, guid: 872ab76d90efbc449990add8c1ca5059, type: 2}
@@ -5468,7 +5468,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Welcome To Moraboraba
+  m_text: Welcome To Morabaraba
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 872ab76d90efbc449990add8c1ca5059, type: 2}
   m_sharedMaterial: {fileID: -2050847696049269882, guid: 872ab76d90efbc449990add8c1ca5059, type: 2}
