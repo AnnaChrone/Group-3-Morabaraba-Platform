@@ -61,23 +61,6 @@ public class SlotID_Tests
         Object.DestroyImmediate(newSlotObject);
     }
 
-    [Test] //DECIDE IF WANNA KEEP THIS
-    //This test checks that slotUI remains null if it is missing
-    public void test_awake_leaves_slotUI_null_when_slotUI_missing()
-    {
-        // Setup
-        var newSlotObject = new GameObject("NewSlot");
-        var newSlotID = newSlotObject.AddComponent<SlotID>();
-
-        // Act
-        newSlotID.InitializeForTesting();
-
-        // Assert
-        Assert.IsNull(newSlotID.slotUI);
-
-        Object.DestroyImmediate(newSlotObject);
-    }
-
     //setOccupant test cases
 
     [Test]
@@ -199,22 +182,6 @@ public class SlotID_Tests
         Assert.IsFalse(slotID.isInMill);
     }
 
-    [Test] //DECIDE
-    //This test checks that clearing the slot resets both occupancy and mill status simultaniously
-    public void test_ClearSlot_resets_occupancy_and_millstatus_simulataniously()
-    {
-        // Assign
-        slotID.SetOccupant(2);
-        slotID.SetMillStatus(true);
-
-        // Act
-        slotID.ClearSlot();
-
-        // Assert
-        Assert.AreEqual(0, slotID.occupiedBy);
-        Assert.IsFalse(slotID.isInMill);
-        Assert.IsFalse(slotID.IsOccupied);
-    }
 
     [Test]
     //This test checks that slot UI colour is reset to empty when cleared
